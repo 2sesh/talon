@@ -206,6 +206,18 @@
   .h-name{font-weight:500; overflow-wrap:anywhere;}
   .h-note{font-size:0.78rem; color:var(--ink-tertiary); line-height:1.3;}
   .h-icd{flex-shrink:0; font-weight:700; color:var(--accent);}
+  /* «Видалити» — лише в талонів, надісланих звідси сьогодні; спрацьовує з другого натискання */
+  .h-del{flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; gap:5px; min-width:36px; height:36px; margin:-8px -8px -8px -2px; padding:0 8px;
+         border:0; border-radius:10px; background:transparent; color:var(--ink-tertiary); font-size:0.8rem; font-weight:700; cursor:pointer;}
+  .h-del svg{width:18px; height:18px; flex-shrink:0;}
+  .h-del:hover{background:var(--danger-soft); color:var(--danger);}
+  .h-del:focus-visible{outline:2px solid var(--danger); outline-offset:1px;}
+  .h-del .h-del-text{display:none;}
+  .h-del.armed{background:var(--danger); color:#fff;}
+  .h-del.armed .h-del-text{display:inline;}
+  .h-del:disabled{opacity:.55; cursor:default;}
+  .history-msg{margin:8px 4px 0; font-size:0.84rem; font-weight:500; color:var(--success);}
+  .history-msg.err{color:var(--danger);}
 
 
   /* комп’ютер: дві рівні колонки — «Пацієнт» ліворуч на всю висоту, «Діагноз» і «Відмітки» праворуч;
@@ -401,6 +413,7 @@
   <section id="history" class="history hidden" aria-label="Надіслані талони">
     <h3 class="history-title">Надіслано за сесію<span id="historyWho"></span> · <span id="historyCount">0</span></h3>
     <ul class="history-list" id="historyList"></ul>
+    <p class="history-msg hidden" id="historyMsg" role="status"></p>
   </section>
 
 </div>
@@ -827,14 +840,13 @@
   onLeave('icd', icdFull, icdError);
   onLeave('name', clean, nameError);
 
-  // ---- ПІБ пацієнта: підказка сама «друкується», доки поле не натиснули й нічого в нього не ввели ----
-  // Кілька кіл — і далі звичайна підказка (знову «друкується», коли повертаєтеся до сторінки чи починаєте новий талон).
+  // ---- ПІБ пацієнта: підказка сама «друкується» по колу, доки поле не натиснули й нічого в нього не ввели ----
+  // Коли сторінку не видно, зупиняється й починається знову, щойно до неї повернулися (і з кожним новим талоном).
   // Хто вимкнув анімацію в налаштуваннях системи, бачить звичайну підказку.
   var NAME_HINT = $('name').getAttribute('placeholder');                 // «Прізвище, ім’я та по батькові»
-  var NAME_DEMO = ['Прізвище Ім’я По батькові', 'напр. Бондар Ольга Іванівна'];
+  var NAME_DEMO = ['Прізвище Ім’я По батькові', 'напр. Рональд Біліус Візлі'];
   var calmMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var NAME_ROUNDS = 4;                                                   // скільки разів «надрукувати» обидві фрази
-  var nameHint = { on: false, timer: 0, phrase: 0, pos: 0, step: 'type', blink: 0, done: 0 };
+  var nameHint = { on: false, timer: 0, phrase: 0, pos: 0, step: 'type', blink: 0 };
   function nameHintStop(){
     clearTimeout(nameHint.timer);
     if (!nameHint.on) return;
@@ -859,10 +871,7 @@
     } else {                                           // стирає — і далі наступна фраза
       nameHint.pos--;
       delay = 22;
-      if (nameHint.pos <= 0) {
-        nameHint.pos = 0; nameHint.step = 'type'; nameHint.phrase = (nameHint.phrase + 1) % NAME_DEMO.length; delay = 450;
-        if (++nameHint.done >= NAME_ROUNDS * NAME_DEMO.length) { nameHintStop(); return; }
-      }
+      if (nameHint.pos <= 0) { nameHint.pos = 0; nameHint.step = 'type'; nameHint.phrase = (nameHint.phrase + 1) % NAME_DEMO.length; delay = 450; }
     }
     el.placeholder = text.slice(0, nameHint.pos) + (nameHint.step === 'hold' && nameHint.blink % 2 ? '' : '|');
     nameHint.timer = setTimeout(nameHintTick, delay);
@@ -870,7 +879,7 @@
   function nameHintStart(){
     var el = $('name');
     if (calmMotion || nameHint.on || el.value || document.activeElement === el) return;
-    nameHint.on = true; nameHint.phrase = 0; nameHint.pos = 0; nameHint.step = 'type'; nameHint.done = 0;
+    nameHint.on = true; nameHint.phrase = 0; nameHint.pos = 0; nameHint.step = 'type';
     el.classList.add('typing');
     el.placeholder = '|';
     nameHint.timer = setTimeout(nameHintTick, 500);
@@ -1000,7 +1009,7 @@
   function send(url, opts){ return TEST ? stSend(url, opts) : fetch(url, opts); }   // у тестовому режимі — перехоплення
   function saved(d){
     local.set('talonDoctor', d.doctor);
-    addToHistory(d);
+    startClaim(addToHistory(d), d);
     $('doneText').textContent = maskName(d.name) + ' · ' + d.icd;
     show('done');
     window.scrollTo(0, 0);
@@ -1029,13 +1038,142 @@
   function addToHistory(d){
     loadHistory();                        // інша вкладка могла вже додати свої талони, а дата — змінитися
     var now = new Date();
-    todayLog.items.unshift({ t: hhmm(now), sec: now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds(),
-                             name: maskName(d.name), icd: d.icd, doctor: d.doctor, date: d.date });
+    var item = { id: 'L' + now.getTime().toString(36) + Math.random().toString(36).slice(2, 7),
+                 t: hhmm(now), sec: now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds(),
+                 name: maskName(d.name), icd: d.icd, doctor: d.doctor, date: d.date };
+    todayLog.items.unshift(item);
     if (todayLog.items.length > 500) todayLog.items.length = 500;
-    local.set(HISTORY_KEY, JSON.stringify(todayLog));
+    saveHistory();
     renderHistory();
     setTimeout(loadSheet, 3000);          // Google додає рядок у таблицю за кілька секунд — тоді перечитуємо її
     setTimeout(loadSheet, 20000);
+    return item;
+  }
+  function saveHistory(){ if (local.ok) local.set(HISTORY_KEY, JSON.stringify(todayLog)); }
+  function findLocal(id){ for (var i = 0; i < todayLog.items.length; i++) if (todayLog.items[i].id === id) return todayLog.items[i]; return null; }
+
+  // ---- видалення талона: лише сьогоднішнього й надісланого з цього браузера ----
+  // Одразу після надсилання сторінка просить у скрипта таблиці «квитанцію» на свій талон: передає відбиток талона
+  // (SHA-256 від лікаря, дати, ПІБ і коду — ПІБ з нього не відновити), скрипт знаходить рядок і повертає підпис.
+  // Квитанція зберігається разом із записом історії (без ПІБ); щоб видалити талон, вона йде назад у скрипт, і той
+  // переносить рядок на аркуш «Видалені». Відбиток живе лише в пам’яті сторінки, поки чекаємо на квитанцію.
+  var CLAIM_DELAYS = [2500, 6000, 15000, 35000, 75000, 150000];   // Google дописує рядок у таблицю за кілька секунд
+  var claims = {};
+  function canDelete(){ return TEST || (!!SCRIPT_URL && local.ok); }
+  function talonHash(d){ return sha256hex(['talon', d.doctor, d.date, clean(d.name).toLowerCase(), String(d.icd).toUpperCase()].join('\n')); }
+  function startClaim(item, d){
+    if (!canDelete() || !item) return;
+    claims[item.id] = { h: talonHash(d), doctor: d.doctor, n: 0, timer: 0 };
+    nextClaim(item.id);
+  }
+  function nextClaim(id){
+    var c = claims[id];
+    if (!c) return;
+    if (c.n >= CLAIM_DELAYS.length) { delete claims[id]; return; }   // так і не з’явився в таблиці — видалити можна лише в таблиці
+    c.timer = setTimeout(function(){ claimNow(id); }, CLAIM_DELAYS[c.n++]);
+  }
+  function claimNow(id){
+    var c = claims[id];
+    if (!c) return Promise.resolve();
+    clearTimeout(c.timer);
+    loadHistory();
+    if (!findLocal(id)) { delete claims[id]; return Promise.resolve(); }
+    var skip = todayLog.items.filter(function(s){ return s.ts && s.doctor === c.doctor; }).map(function(s){ return s.ts; });
+    return scriptCall({ what: 'claim', doctor: c.doctor, h: c.h, skip: skip.join(',') }).then(function(res){
+      if (res.status === 'ok' && res.found && res.ts && res.r) {
+        delete claims[id];
+        loadHistory();
+        var it = findLocal(id);
+        if (it) { it.ts = String(res.ts); it.r = String(res.r); saveHistory(); renderHistory(); }
+      } else if (res.status !== 'ok' && res.error === 'key') delete claims[id];   // скрипт таблиці ще старий — без видалення
+      else nextClaim(id);
+    }, function(){ nextClaim(id); });
+  }
+  // запит до скрипта таблиці (JSONP); у тестовому режимі — до «скрипта» в пам’яті сторінки
+  function scriptCall(params){
+    if (TEST) return stScriptCall(params);
+    return jsonp(function(cb){
+      return SCRIPT_URL + (SCRIPT_URL.indexOf('?') === -1 ? '?' : '&') + Object.keys(params).map(function(k){ return k + '=' + encodeURIComponent(params[k]); }).join('&') +
+             '&key=' + encodeURIComponent(SCRIPT_KEY) + '&callback=' + cb + '&_=' + Date.now();
+    }, function(res){ return res && typeof res === 'object' ? res : null; });
+  }
+  var delState = { armed: '', busy: '', timer: 0 }, msgTimer = 0;
+  function historyMsg(text, err){
+    var m = $('historyMsg');
+    clearTimeout(msgTimer);
+    m.textContent = text || '';
+    m.classList.toggle('err', !!err);
+    m.classList.toggle('hidden', !text);
+    if (text) msgTimer = setTimeout(function(){ historyMsg(''); renderHistory(); }, 7000);
+  }
+  function disarmDelete(){ clearTimeout(delState.timer); delState.armed = ''; renderHistory(); }
+  $('historyList').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('.h-del') : null;
+    if (!b || b.disabled) return;
+    var id = b.getAttribute('data-id');
+    if (delState.armed !== id) {                         // перше натискання — лише «Видалити?»
+      clearTimeout(delState.timer);
+      delState.armed = id;
+      delState.timer = setTimeout(disarmDelete, 4000);
+      renderHistory();
+      var again = document.querySelector('#historyList .h-del[data-id="' + id + '"]');
+      if (again) again.focus();
+      return;
+    }
+    clearTimeout(delState.timer);
+    delState.armed = ''; delState.busy = id;
+    renderHistory();
+    deleteTalon(id).then(function(){ delState.busy = ''; renderHistory(); });
+  });
+  function deleteTalon(id){
+    loadHistory();
+    var item = findLocal(id);
+    if (!item || !item.r) return Promise.resolve();
+    return scriptCall({ what: 'delete', doctor: item.doctor, ts: item.ts, r: item.r }).then(function(res){
+      if (res.status === 'ok') {
+        loadHistory();
+        var gone = findLocal(id) || item;
+        todayLog.items = todayLog.items.filter(function(s){ return s.id !== id; });
+        saveHistory();
+        if (sheet.items) { var k = matchSheet(gone, {}); if (k > -1) sheet.items.splice(k, 1); }   // щоб талон не «повернувся», поки таблиця перечитується
+        historyMsg(res.deleted ? 'Талон видалено: його перенесено на аркуш «Видалені» в таблиці.' : 'Цього талона в таблиці вже немає — прибрано зі списку.');
+        loadSheet();
+      } else historyMsg(res.error === 'old' ? 'Видаляти можна лише сьогоднішні талони.' : 'Не вдалося видалити талон — спробуйте ще раз.', true);
+    }, function(){ historyMsg('Не вдалося видалити талон — перевірте інтернет і спробуйте ще раз.', true); });
+  }
+
+  // SHA-256 (для відбитка талона): рядок → 64 шістнадцяткові знаки
+  var SHA_K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  function sha256hex(str){
+    var bytes = unescape(encodeURIComponent(str)), l = bytes.length, words = [], H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19], i, j;
+    for (i = 0; i < l; i++) words[i >> 2] |= bytes.charCodeAt(i) << (24 - (i % 4) * 8);
+    words[l >> 2] |= 0x80 << (24 - (l % 4) * 8);
+    words[((l + 8) >> 6 << 4) + 15] = l * 8;
+    for (j = 0; j < words.length; j += 16) {
+      var w = [], a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+      for (i = 0; i < 64; i++) {
+        if (i < 16) w[i] = words[j + i] | 0;
+        else {
+          var x = w[i - 15], y = w[i - 2];
+          w[i] = (((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3)) + w[i - 7] + (((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10)) + w[i - 16] | 0;
+        }
+        var t1 = h + (((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7))) + ((e & f) ^ (~e & g)) + SHA_K[i] + w[i] | 0;
+        var t2 = (((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10))) + ((a & b) ^ (a & c) ^ (b & c)) | 0;
+        h = g; g = f; f = e; e = d + t1 | 0; d = c; c = b; b = a; a = t1 + t2 | 0;
+      }
+      H[0] = H[0] + a | 0; H[1] = H[1] + b | 0; H[2] = H[2] + c | 0; H[3] = H[3] + d | 0;
+      H[4] = H[4] + e | 0; H[5] = H[5] + f | 0; H[6] = H[6] + g | 0; H[7] = H[7] + h | 0;
+    }
+    return H.map(function(v){ return ('0000000' + (v >>> 0).toString(16)).slice(-8); }).join('');
   }
   // ПІБ пацієнта на екрані й в історії — зашифроване: у кожному слові перші 2 літери, решта — зірочки
   // (Іваненко Іван Іванович → Ів****** Ів** Ів******). Повне ПІБ іде лише в Google Форму й на комп’ютері не зберігається.
@@ -1113,7 +1251,7 @@
       if (res.day !== day) throw new Error('day');   // у скрипта вже інший день (опівночі) — візьмемо наступного разу
       return res.items.map(function(it, i){
         return { t: String(it.t || ''), sec: +it.sec || 0, name: maskName(clean(it.name)), icd: clean(it.icd).toUpperCase(),
-                 doctor: doctor, date: String(it.date || ''), sheet: true, row: i };
+                 doctor: doctor, date: String(it.date || ''), sheet: true, row: i, ts: it.ts ? String(it.ts) : '' };
       });
     }) : (sheet.cols ? Promise.resolve(sheet.cols) : gviz('limit 0').then(function(t){
       sheet.cols = sheetColumns(t);
@@ -1141,15 +1279,26 @@
   // секунди від півночі — щоб розставити талони від найновішого (у записів попередньої версії є лише «гг:хх»)
   function secOf(s){ if (s.sec != null) return s.sec; var p = String(s.t).split(':'); return ((+p[0]) * 60 + (+p[1] || 0)) * 60; }
   // список для показу: з таблиці (для вибраного лікаря) + надіслане звідси, чого в таблиці ще немає
+  // рядок таблиці, що відповідає талону, надісланому звідси: точно — за часом із квитанції; інакше — те саме ПІБ і код,
+  // час до 10 хвилин різниці (рядки таблиці йдуть від старших, тож однакові талони стають у пару по черзі)
+  function matchSheet(l, used){
+    var list = sheet.items || [], i;
+    if (l.ts) for (i = 0; i < list.length; i++) if (!used[i] && list[i].ts === l.ts) return i;
+    for (i = 0; i < list.length; i++) {
+      var r = list[i];
+      if (!used[i] && !(l.ts && r.ts) && r.name === l.name && r.icd === l.icd && Math.abs(secOf(r) - secOf(l)) <= 600) return i;
+    }
+    return -1;
+  }
+  function withMine(s, l){ var o = {}; for (var k in s) if (Object.prototype.hasOwnProperty.call(s, k)) o[k] = s[k]; o.mine = l; return o; }
   function historyItems(doctor){
-    var mine = todayLog.items.filter(function(s){ return !doctor || s.doctor === doctor; });
+    var mine = todayLog.items.filter(function(s){ return !doctor || s.doctor === doctor; }).map(function(l){ return withMine(l, l); });
     if (!doctor || !sheet.items || sheet.doctor !== doctor || sheet.day !== todayLog.day) return mine;
     var out = sheet.items.slice(), used = {};
-    mine.forEach(function(l){
-      for (var i = 0; i < sheet.items.length; i++) {
-        var r = sheet.items[i];
-        if (!used[i] && r.name === l.name && r.icd === l.icd && Math.abs(secOf(r) - secOf(l)) <= 600) { used[i] = true; return; }
-      }
+    // спершу талони з квитанцією (точний збіг за часом), далі решта — від старших до новіших
+    mine.slice().sort(function(a, b){ return (b.ts ? 1 : 0) - (a.ts ? 1 : 0) || secOf(a) - secOf(b); }).forEach(function(l){
+      var i = matchSheet(l, used);
+      if (i > -1) { used[i] = true; out[i] = withMine(sheet.items[i], l.mine); return; }   // показуємо рядок таблиці — це той самий талон
       out.push(l);                                     // щойно надіслане — у таблиці з’явиться за кілька секунд
     });
     // найновіші — першими; за однакового часу — спершу щойно надіслане звідси, далі нижчі рядки таблиці
@@ -1170,12 +1319,23 @@
       li.appendChild(make('span', 'h-time', s.t));
       li.appendChild(main);
       li.appendChild(make('span', 'h-icd', s.icd));
+      var mine = s.mine;
+      if (mine && mine.r && mine.id) {                 // свій сьогоднішній талон, на який є квитанція, — можна видалити
+        var del = document.createElement('button'), armed = delState.armed === mine.id;
+        del.type = 'button'; del.className = 'h-del' + (armed ? ' armed' : ''); del.setAttribute('data-id', mine.id);
+        del.disabled = delState.busy === mine.id;
+        del.setAttribute('aria-label', (armed ? 'Точно видалити талон ' : 'Видалити талон ') + s.name + ' · ' + s.icd);
+        del.innerHTML = TRASH_ICON + '<span class="h-del-text">' + (del.disabled ? 'Видаляю…' : 'Видалити?') + '</span>';
+        if (del.disabled) del.className += ' armed';
+        li.appendChild(del);
+      }
       list.appendChild(li);
     });
     $('historyWho').textContent = doctor ? ' · ' + shortName(doctor) : '';
     $('historyCount').textContent = items.length;
-    $('history').classList.toggle('hidden', items.length === 0);
+    $('history').classList.toggle('hidden', items.length === 0 && $('historyMsg').classList.contains('hidden'));
   }
+  var TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/></svg>';
   function refreshHistory(){ loadHistory(); renderHistory(); }
   function onDoctorChange(){ renderHistory(); loadSheet(); }
   // талон надіслали з іншої вкладки, повернулися до сторінки або настав новий день — список оновлюється сам
@@ -1272,7 +1432,36 @@
   // «надсилання» в тестовому режимі: запит записується для перевірки, у Google нічого не йде
   function stSend(url, opts){
     ST.sent.push({ url: url, method: opts.method, body: String(opts.body) });
-    return ST.fail ? Promise.reject(new Error('offline')) : Promise.resolve({});
+    if (ST.fail) return Promise.reject(new Error('offline'));
+    var q = new URLSearchParams(String(opts.body));                 // «таблиця»: рядок з’являється, як після справжньої форми
+    var day = q.get(ENTRY.date + '_year') + '-' + pad(+q.get(ENTRY.date + '_month')) + '-' + pad(+q.get(ENTRY.date + '_day'));
+    stSheet.rows.push({ ts: String(Date.now() + stSheet.rows.length), doctor: q.get(ENTRY.doctor),
+      h: sha256hex(['talon', q.get(ENTRY.doctor), day, clean(q.get(ENTRY.patient)).toLowerCase(), String(q.get(ENTRY.icd)).toUpperCase()].join('\n')) });
+    return Promise.resolve({});
+  }
+  // «скрипт таблиці» в пам’яті сторінки: квитанції й видалення — так само, як відповідає справжній скрипт
+  var stSheet = { rows: [], deleted: [], calls: [], down: false };
+  function stReceipt(row){ return 'rc-' + row.ts + '-' + row.h.slice(0, 12); }
+  function stScriptCall(p){
+    stSheet.calls.push(p);
+    if (stSheet.down) return Promise.reject(new Error('offline'));
+    var i, row;
+    if (p.what === 'claim') {
+      var skip = String(p.skip || '').split(',').filter(Boolean);
+      for (i = stSheet.rows.length - 1; i >= 0; i--) {
+        row = stSheet.rows[i];
+        if (row.doctor === p.doctor && row.h === p.h && skip.indexOf(row.ts) === -1) return Promise.resolve({ status: 'ok', found: true, ts: row.ts, r: stReceipt(row) });
+      }
+      return Promise.resolve({ status: 'ok', found: false });
+    }
+    if (p.what === 'delete') {
+      for (i = 0; i < stSheet.rows.length; i++) {
+        row = stSheet.rows[i];
+        if (row.ts === p.ts && row.doctor === p.doctor && stReceipt(row) === p.r) { stSheet.deleted.push(stSheet.rows.splice(i, 1)[0]); return Promise.resolve({ status: 'ok', deleted: true }); }
+      }
+      return Promise.resolve({ status: 'ok', deleted: false });
+    }
+    return Promise.resolve({ status: 'error', error: 'key' });
   }
   function stReal(k){ try { return window.localStorage.getItem(k); } catch (e) { return null; } }
 
@@ -1625,6 +1814,75 @@
       clearErrors();
     });
   }
+  function stGroupDelete(){
+    stGroup('Видалення талона', 'Кнопка «Видалити» — лише в сьогоднішніх талонів, надісланих звідси; квитанція від скрипта таблиці без ПІБ; видаляє з другого натискання.');
+    stEq('SHA-256 (відбиток талона): порожній рядок, «abc», текст із кирилицею — як у стандарті й у скрипті таблиці',
+      [sha256hex(''), sha256hex('abc'), sha256hex('talon\nКурта Ліна Григорівна\n2026-10-22\nярошенко ганна андріївна\nJ06.9')],
+      ['e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+       'deb164bef6394a45be1ea9c87f5fa5019577623f65cb05952da43f532f6ee474']);
+    var d = stSample(), keepLog = local.get(HISTORY_KEY), sentBefore = ST.sent.length, item, id;
+    show('talon'); clearErrors(); ST.fail = false;
+    stSheet.calls = [];
+    stFill(d);
+    stSubmit();
+    return stWait(40).then(function(){
+      loadHistory();
+      item = todayLog.items[0]; id = item && item.id;
+      stCheck('Талон надіслано; поки квитанції немає — кнопки «Видалити» немає', ST.sent.length === sentBefore + 1 && !!id && !item.r && !!claims[id] &&
+        !$('historyList').querySelector('.h-del'), id || 'немає запису');
+      return claimNow(id);
+    }).then(function(){
+      loadHistory();
+      item = findLocal(id);
+      var call = stSheet.calls[0] || {}, stored = String(local.get(HISTORY_KEY));
+      stCheck('Квитанція: скрипт отримав лікаря й відбиток талона (не ПІБ), у браузері — квитанція без ПІБ і без відбитка',
+        call.what === 'claim' && call.doctor === d.doctor && call.h === talonHash(d) && JSON.stringify(call).indexOf('Ярошенко') === -1 &&
+        !!item && !!item.r && !!item.ts && stored.indexOf(item.r) !== -1 && stored.indexOf('Ярошенко') === -1 && stored.indexOf(call.h) === -1, stShow(call));
+      renderHistory();
+      var btn = $('historyList').querySelector('.h-del[data-id="' + id + '"]');
+      stCheck('У списку «Надіслано за сесію» в цього талона — кнопка «Видалити»', !!btn);
+      if (btn) btn.click();
+      var armed = $('historyList').querySelector('.h-del.armed');
+      stCheck('Перше натискання — лише «Видалити?», нічого не видалено', !!armed && armed.textContent === 'Видалити?' &&
+        stSheet.calls.filter(function(c){ return c.what === 'delete'; }).length === 0 && !!findLocal(id));
+      if (armed) armed.click();
+      return stWait(40);
+    }).then(function(){
+      var del = stSheet.calls.filter(function(c){ return c.what === 'delete'; })[0] || {};
+      loadHistory();
+      stCheck('Друге натискання — талон видалено: у скрипт пішли лікар, час і квитанція; запис зник зі списку, є повідомлення',
+        del.doctor === d.doctor && del.ts === item.ts && del.r === item.r && stSheet.deleted.length === 1 && !findLocal(id) &&
+        $('historyMsg').textContent.indexOf('Видалені') !== -1, stShow(del) + ' / ' + $('historyMsg').textContent);
+      // талон без квитанції (надісланий з іншого телефона чи до оновлення) — без кнопки
+      todayLog.items.unshift({ id: 'Lother', t: '09:00', sec: 32400, name: 'Ів****** Ів** Ів******', icd: 'I10', doctor: d.doctor, date: d.date });
+      renderHistory();
+      stCheck('Талон без квитанції (з іншого телефона) — без кнопки «Видалити»', !$('historyList').querySelector('.h-del[data-id="Lother"]'));
+      todayLog.items.shift();
+      // немає зв’язку під час видалення — талон лишається, повідомлення про помилку
+      todayLog.items.unshift({ id: 'Lnet', t: '09:05', sec: 32700, name: 'Пе****** Пе** Пе******', icd: 'J06.9', doctor: d.doctor, date: d.date, ts: '1', r: 'rc-x' });
+      saveHistory();
+      stSheet.down = true;
+      return deleteTalon('Lnet');
+    }).then(function(){
+      stSheet.down = false;
+      loadHistory();
+      stCheck('Немає зв’язку — талон лишається в списку, повідомлення «Не вдалося видалити»', !!findLocal('Lnet') && $('historyMsg').classList.contains('err') &&
+        $('historyMsg').textContent.indexOf('Не вдалося видалити') === 0, $('historyMsg').textContent);
+      // старий скрипт таблиці (без видалення) — квитанцію більше не просимо
+      claims.Lold = { h: 'x', doctor: d.doctor, n: 0, timer: 0 };
+      todayLog.items.unshift({ id: 'Lold', t: '09:10', sec: 33000, name: 'Ко****** Ол** Пе******', icd: 'K29.7', doctor: d.doctor, date: d.date });
+      saveHistory();
+      var keepCall = stScriptCall;
+      stScriptCall = function(){ return Promise.resolve({ status: 'error', error: 'key' }); };
+      return claimNow('Lold').then(function(){ stScriptCall = keepCall; });
+    }).then(function(){
+      stCheck('Скрипт таблиці ще старий (без видалення) — квитанцію більше не просить, кнопки немає', !claims.Lold && !$('historyList').querySelector('.h-del[data-id="Lold"]'));
+      historyMsg('');
+      if (keepLog === null) local.remove(HISTORY_KEY); else local.set(HISTORY_KEY, keepLog);
+      loadHistory(); renderHistory();
+      $('nextBtn').click();
+    });
+  }
   function stGroupClear(){
     stGroup('«Очистити все»', 'Перше натискання — лише попередження; друге очищає все, разом із лікарем; дата — сьогоднішня.');
     stFill(stSample());
@@ -1655,7 +1913,7 @@
     }
     stBox().scrollIntoView({ block: 'start' });
     stRender();
-    var steps = [stGroupConfig, stGroupIcd, stGroupName, stGroupNameHint, stGroupValidate, stGroupPayload, stGroupMask, stGroupHistory, stGroupDate, stGroupDoctor, stGroupPhotos, stGroupSubmit, stGroupClear,
+    var steps = [stGroupConfig, stGroupIcd, stGroupName, stGroupNameHint, stGroupValidate, stGroupPayload, stGroupMask, stGroupHistory, stGroupDate, stGroupDoctor, stGroupPhotos, stGroupSubmit, stGroupDelete, stGroupClear,
                  function(){ return stGroupSafety(before); }], i = 0;
     function fail(e, n){
       if (ST.groups.length === n) stGroup('Перевірка');
