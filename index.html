@@ -529,7 +529,9 @@
     if (one.length === 1 && /[А-ЯҐЄІЇа-яґєії’'ʼ]/.test(one)) return one;     // кирилична літера — можливо, початок слова
     return icdFull(t);                                                    // код (латинська літера — велика)
   }
-  function icdTypedProblem(v){ return icdWords(v) || (v.length === 1 && ICD_LETTER.test(v)) ? '' : icdProblem(v); }
+  // лише цифри коду без літери (06, 06.9, 069) — пошук за номером у довіднику: 06 → A06…, J06.9 (ГРВІ)…
+  function icdDigits(v){ return /^\d{1,2}(\.\d{0,2})?$|^\d{3,4}$/.test(String(v || '')); }
+  function icdTypedProblem(v){ return icdWords(v) || icdDigits(v) || (v.length === 1 && ICD_LETTER.test(v)) ? '' : icdProblem(v); }
   // чи може це бути початком правильного коду (поки людина ще вводить)
   function icdPrefixOk(c){ return c === '' || /^[A-Z]\d{0,2}$/.test(c) || /^[A-Z]\d{2}\.\d{0,2}$/.test(c) || /^[A-Z]\d{2}\.\d\.\d?$/.test(c); }
   var AGE_MAX = 120;
@@ -866,7 +868,7 @@
     });
   }
   onLeave('age', function(v){ return /^\d+$/.test(v) ? String(parseInt(v, 10)) : v; }, function(){ return ''; });
-  onLeave('icd', function(v){ return icdWords(v) ? clean(v) : icdFull(v); }, function(v){ return icdPicking ? '' : icdWords(v) ? MSG.icdPick : icdError(v); });
+  onLeave('icd', function(v){ return icdWords(v) ? clean(v) : icdFull(v); }, function(v){ return icdPicking ? '' : icdWords(v) || icdDigits(v) ? MSG.icdPick : icdError(v); });
   onLeave('name', clean, nameError);
 
   // ---- ПІБ пацієнта: підказка сама «друкується» по колу, доки поле не натиснули й нічого в нього не ввели ----
@@ -967,6 +969,13 @@
   function mkhCode(q){ var c = icdLive(q).replace(/\s+/g, ''); return /^[A-Z]\d[\d.]*$/.test(c) ? c.replace(/\./g, '') : ''; }
   function mkhSearch(q, limit){
     var list = mkhLoad(), out = [], i, t, n = 0, code = icdWords(q) ? '' : mkhCode(q);
+    if (icdDigits(q.trim())) {                          // цифри без літери: усі літери, частіші діагнози — вище (06 → J06.9 першим)
+      var dg = q.replace(/[\s.]/g, ''), hit = [];
+      for (i = 0; i < list.length; i++) if (list[i].cd.slice(1).indexOf(dg) === 0) hit.push(i);
+      hit.sort(function(a, b){ return list[a].r - list[b].r || a - b; });
+      for (i = 0; i < hit.length && i < limit; i++) out.push(list[hit[i]]);
+      return { items: out, total: hit.length, toks: [], stems: [], digits: true };
+    }
     if (code) {                                         // код: усі, що з нього починаються, — у порядку довідника
       for (i = 0; i < list.length; i++) if (list[i].cd.indexOf(code) === 0 && n++ < limit) out.push(list[i]);
       return { items: out, total: n, toks: [], stems: [] };
@@ -1072,9 +1081,10 @@
   // список закривається, назва — під полем (відкритий список закриває поля нижче — щоб дотик не влучив у нього випадково)
   function icdSuggest(){
     var el = $('icd'), q = el.value.trim(), words = icdWords(q);
-    if (q.length < 2 || document.activeElement !== el || (!words && !mkhCode(q))) { icdClose(); return; }
+    var digits = !words && icdDigits(q);
+    if (q.length < 2 || document.activeElement !== el || (!words && !digits && !mkhCode(q))) { icdClose(); return; }
     var r = mkhSearch(q, 40);
-    if (!words && (!r.items.length || MKH_BY[mkhKey(icdFull(q))])) { icdClose(); return; }
+    if (!words && !digits && (!r.items.length || MKH_BY[mkhKey(icdFull(q))])) { icdClose(); return; }
     var list = $('icdList'), note = $('icdNote');
     list.textContent = '';
     icdUI.items = r.items;
@@ -1097,7 +1107,7 @@
     el.setAttribute('aria-expanded', 'true');
     icdUI.open = true; icdUI.active = -1;
     el.removeAttribute('aria-activedescendant');
-    if (words && r.items.length) icdSetActive(0);      // слова: Enter вибирає перший рядок
+    if ((words || digits) && r.items.length) icdSetActive(0);      // слова чи цифри: Enter вибирає перший рядок
     icdFit();
   }
   // висота списку — до низу видимої частини екрана (на телефоні її зменшує клавіатура); замало місця — поле піднімається вище
@@ -1201,7 +1211,7 @@
     if (!d.sex) e.sex = 'Оберіть стать';
     if (!d.residence) e.residence = 'Оберіть місце проживання';
     if (!d.icd) e.icd = 'Вкажіть код за МКХ-10';
-    else if (icdWords(d.icd)) e.icd = MSG.icdPick;                 // написали слова, але не вибрали діагноз зі списку
+    else if (icdWords(d.icd) || icdDigits(d.icd)) e.icd = MSG.icdPick;   // слова чи цифри без літери — не вибрали діагноз зі списку
     else if (icdError(d.icd)) e.icd = icdError(d.icd);
     if (!d.disp) e.disp = 'Вкажіть диспансерний облік: так чи ні';
     if (!d.doctor) e.doctor = 'Оберіть лікаря';
@@ -1937,8 +1947,14 @@
     stCheck('Свій код, якого немає в довіднику (U99.9), надсилається без помилки', !validate(own).icd, validate(own).icd);
     stType(el, ''); stType(el, 'Ж');
     var zh = el.value;
-    stType(el, ''); stType(el, '5');
-    stCheck('Літера на початку (початок слова) вписується; цифра на початку — ні, з поясненням', zh === 'Ж' && el.value === '' && box.classList.contains('tip-on'), stShow([zh, el.value]));
+    stType(el, ''); stType(el, '/');
+    stCheck('Літера на початку (початок слова) вписується; зайвий знак на початку — ні, з поясненням', zh === 'Ж' && el.value === '' && box.classList.contains('tip-on'), stShow([zh, el.value]));
+    stType(el, ''); stType(el, '06');
+    var dOpen = !shut(), dFirst = icdUI.items[0] ? icdUI.items[0].c : '', dAll = icdUI.items.every(function(e){ return e.cd.slice(1).indexOf('06') === 0; }), dAct = icdUI.active;
+    var dVal = validate((function(){ var x = stSample(); x.icd = '06'; return x; })()).icd;
+    key('Enter');
+    stCheck('Лише цифри коду (06) — список кодів усіх літер, J06.9 (ГРВІ) першим; Enter → J06.9; самі цифри не надсилаються',
+      dOpen && dFirst === 'J06.9' && dAll && dAct === 0 && el.value === 'J06.9' && dVal === MSG.icdPick, stShow([dOpen, dFirst, dAll, dAct, el.value, dVal]));
     stType(el, 'гостра бронх');
     el.blur();
     var leave = box.querySelector('.field-error').textContent;
