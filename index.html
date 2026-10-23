@@ -178,6 +178,8 @@
   .chip input:checked + span{background:var(--pick-soft); border-color:var(--pick); color:var(--pick-ink); font-weight:600;}
   .chip input:checked + span svg{display:block; color:var(--pick);}
   .chip input:focus-visible + span{outline:2px solid var(--accent); outline-offset:2px;}
+  .name-opt{display:inline-flex; margin-top:8px;}
+  .chip-sm span{min-height:32px; padding:5px 11px; font-size:0.84rem;}
 
   /* перемикач «вперше в житті» */
   .switch-row{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 14px; border-radius:12px; background:var(--fill); cursor:pointer;}
@@ -315,6 +317,7 @@
       <div class="field" data-field="name">
         <label class="label" for="name">ПІБ пацієнта <span class="optional">(повністю)</span></label>
         <input class="input" id="name" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="150" placeholder="Прізвище, ім’я та по батькові">
+        <label class="chip chip-sm name-opt"><input type="checkbox" id="noPatr" data-skip tabindex="-1"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Немає по батькові</span></label>
         <p class="field-error"></p>
       </div>
 
@@ -566,10 +569,10 @@
       .replace(/^\s+/, '')
       .replace(/\s{2,}/g, ' ');
   }
-  // ПІБ повністю: щонайменше 3 слова, кожне — не менше 2 літер (без ініціалів)
+  // ПІБ повністю: щонайменше 3 слова (з відміткою «Немає по батькові» — 2), кожне — не менше 2 літер (без ініціалів)
   function nameFull(v){
-    var parts = clean(v).split(' ').filter(Boolean);
-    return parts.length >= 3 && parts.every(function(p){ return p.replace(/[’\-]/g, '').length >= 2; });
+    var parts = clean(v).split(' ').filter(Boolean), box = document.getElementById('noPatr');
+    return parts.length >= (box && box.checked ? 2 : 3) && parts.every(function(p){ return p.replace(/[’\-]/g, '').length >= 2; });
   }
 
   function clean(s){ return String(s || '').replace(/[\u0000-\u001F\u007F]+/g, ' ').replace(/\s+/g, ' ').trim(); }
@@ -873,6 +876,11 @@
   onLeave('age', function(v){ return /^\d+$/.test(v) ? String(parseInt(v, 10)) : v; }, function(){ return ''; });
   onLeave('icd', function(v){ return icdWords(v) ? clean(v) : icdFull(v); }, function(v){ return icdPicking ? '' : icdWords(v) || icdDigits(v) ? MSG.icdPick : icdError(v); });
   onLeave('name', clean, nameError);
+  // відмітили чи зняли «Немає по батькові» — помилку під ПІБ перераховуємо одразу
+  $('noPatr').addEventListener('change', function(){
+    var v = clean($('name').value);
+    if (fieldBox('name').classList.contains('invalid') || (v && !this.checked && nameError(v))) setError('name', v ? nameError(v) : '');
+  });
 
   // ---- ПІБ пацієнта: підказка сама «друкується» по колу, доки поле не натиснули й нічого в нього не ввели ----
   // Коли сторінку не видно, зупиняється й починається знову, щойно до неї повернулися (і з кожним новим талоном).
@@ -1210,7 +1218,7 @@
   function focusables(){
     var groups = {};
     return Array.prototype.filter.call($('talon').querySelectorAll('input, select, button'), function(el){
-      if (el.disabled || el.offsetParent === null) return false;
+      if (el.disabled || el.offsetParent === null || el.hasAttribute('data-skip')) return false;   // «Немає по батькові» Enter пропускає
       if (el.type === 'radio') {
         if (groups[el.name]) return false;
         var checked = document.querySelector('input[name="' + el.name + '"]:checked');
@@ -1688,7 +1696,7 @@
     ['name', 'age', 'icd'].forEach(function(id){ $(id).value = ''; });
     document.querySelectorAll('input[name="sex"], input[name="residence"], input[name="disp"]').forEach(function(r){ r.checked = false; });
     document.querySelector('input[name="disp"][value="no"]').checked = true;    // «Д» за замовчуванням — «ні»
-    ['firstTime', 'catDisability', 'catUbd', 'catVpo', 'catChaes'].forEach(function(id){ $(id).checked = false; });
+    ['firstTime', 'catDisability', 'catUbd', 'catVpo', 'catChaes', 'noPatr'].forEach(function(id){ $(id).checked = false; });
     clearErrors();
     icdClose(); icdNameSync();
   }
@@ -2073,6 +2081,14 @@
       [true, true, false, false]);
     var full = [['Іваненко Іван Іванович', ''], ['Іваненко Іван', MSG.nameFull], ['Іваненко І. І.', MSG.nameChars], ['Іваненко І І', MSG.nameFull], ['Д’Артаньян-Петренко Анна Петрівна', '']];
     stEq('ПІБ повністю: три слова, без ініціалів', full.map(function(c){ return nameError(c[0]); }), full.map(function(c){ return c[1]; }));
+    var np = $('noPatr');
+    np.checked = true;
+    var withNo = [nameError('Іваненко Іван'), nameError('Іваненко І'), nameError('Іваненко'), nameError('Іваненко Іван Іванович')], d2 = stSample();
+    d2.name = 'Іваненко Іван';
+    var v2 = validate(d2).name || '';
+    resetPatient();
+    stCheck('«Немає по батькові»: досить прізвища й імені (без ініціалів); у формі — без помилки; новий талон знімає відмітку',
+      stSame(withNo, ['', MSG.nameFull, MSG.nameFull, '']) && v2 === '' && !np.checked && validate(d2).name === MSG.nameFull, stShow([withNo, v2, np.checked]));
   }
   function stGroupValidate(){
     stGroup('Перевірка перед надсиланням', 'Обов’язкові поля, вік, дата прийому.');
