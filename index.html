@@ -127,11 +127,14 @@
   .icd-open .icd-name{visibility:hidden;}
   /* кілька діагнозів: кожен — окремий талон зі своїми «Вперше» і «Д» */
   .dx + .dx{margin-top:4px; padding-top:14px; border-top:1px solid var(--separator);}
-  .dx-top{display:flex; align-items:center; gap:8px;}
-  .dx-top .label{flex:1; margin-bottom:6px;}
-  .dx-del{display:none; flex-shrink:0; width:30px; height:30px; margin:-6px 0 0; padding:0; border:1px solid var(--line); border-radius:50%; background:#fff; color:var(--danger); font-size:1.15rem; line-height:1; cursor:pointer;}
-  .dx + .dx .dx-del{display:inline-flex; align-items:center; justify-content:center;}
-  .dx-sent{display:none; margin:-6px 0 0; font-size:0.78rem; font-weight:700; color:var(--success);}
+  .dx-top{display:flex; align-items:center; gap:8px; min-height:30px; margin:0 0 6px;}
+  .dx-top .label{flex:1; margin:0;}
+  .dx-del{display:none; flex-shrink:0; align-items:center; gap:5px; height:30px; margin:0; padding:0 11px 0 9px; border:1px solid rgba(215,0,21,0.28); border-radius:999px;
+          background:#fff; color:var(--danger); font:inherit; font-size:0.82rem; font-weight:600; line-height:1; cursor:pointer; transition:background-color .15s ease;}
+  .dx-del svg{width:15px; height:15px;}
+  .dx-del:hover, .dx-del:active{background:var(--danger-soft);}
+  .dx + .dx .dx-del{display:inline-flex;}
+  .dx-sent{display:none; font-size:0.78rem; font-weight:700; color:var(--success);}
   .dx.sent .dx-sent{display:inline;}
   .dx.sent .dx-del{display:none;}
   .dx.sent .input, .dx.sent .seg{opacity:0.6;}
@@ -363,7 +366,7 @@
       <div id="dxList">
         <div class="dx" data-key="">
           <div class="field" data-field="icd">
-            <div class="dx-top"><label class="label" for="icd">Діагноз за МКХ-10 <span class="optional">(код або назва)</span></label><span class="dx-sent">✓ надіслано</span><button type="button" class="dx-del" data-skip aria-label="Прибрати цей діагноз">×</button></div>
+            <div class="dx-top"><label class="label" for="icd">Діагноз за МКХ-10 <span class="optional">(код або назва)</span></label><span class="dx-sent">✓ надіслано</span><button type="button" class="dx-del" data-skip aria-label="Прибрати цей діагноз"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>Прибрати</button></div>
             <input class="input icd-input" id="icd" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="80" placeholder="напр. J06.9 або «ГРВІ»"
                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="icdList">
             <p class="icd-name hidden" id="icdName" aria-live="polite"></p>
@@ -1361,7 +1364,7 @@
     var seen = {};
     (d.dx || [{ key: '', icd: d.icd, disp: d.disp }]).forEach(function(r, i){
       var k = 'icd' + r.key;
-      if (!r.icd) e[k] = i ? 'Вкажіть код або приберіть цей діагноз (×)' : 'Вкажіть код за МКХ-10';
+      if (!r.icd) e[k] = i ? 'Вкажіть код або натисніть «Прибрати»' : 'Вкажіть код за МКХ-10';
       else if (icdWords(r.icd) || icdDigits(r.icd)) e[k] = MSG.icdPick;   // слова чи цифри без літери — не вибрали діагноз зі списку
       else if (icdError(r.icd)) e[k] = icdError(r.icd);
       else if (seen[mkhKey(r.icd)]) e[k] = 'Цей діагноз уже вказано вище';
@@ -2507,8 +2510,8 @@
     var full = $('addDx').disabled && dxAdd(false) === null && dxRows().length === 10;
     var emptyErr = validate(collect())['icd' + dxKey(extra[0])];
     extra.forEach(dxRemove);
-    stCheck('Не більше 10 діагнозів (кнопка вимикається); порожній зайвий — «Вкажіть код або приберіть цей діагноз (×)»; × прибирає рядок',
-      full && emptyErr === 'Вкажіть код або приберіть цей діагноз (×)' && dxRows().length === 3 && !$('addDx').disabled, stShow([full, emptyErr, dxRows().length]));
+    stCheck('Не більше 10 діагнозів (кнопка вимикається); порожній зайвий — «Вкажіть код або натисніть «Прибрати»»; «Прибрати» прибирає рядок',
+      full && emptyErr === 'Вкажіть код або натисніть «Прибрати»' && dxRows().length === 3 && !$('addDx').disabled, stShow([full, emptyErr, dxRows().length]));
     ST.sent = []; ST.okN = 0; ST.failAfter = 1; ST.fail = false;
     stSubmit();
     return stWait(60).then(function(){
