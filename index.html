@@ -281,8 +281,8 @@
     #talon:not(.hidden){
       display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:18px; align-items:stretch;
       grid-template-areas:
-        "patient diag"
         "patient marks"
+        "patient diag"
         "doctor  doctor"
         "banner  banner"
         ".       actions";
@@ -447,8 +447,23 @@
       </fieldset>
     </section>
 
+    <section class="card card-marks">
+      <h2 class="card-title"><span class="step">2</span>Відмітки</h2>
+
+      <fieldset class="field">
+        <legend class="label">Пацієнт належить до категорії <span class="optional">(відмітьте, якщо так)</span></legend>
+        <div class="chips">
+          <label class="chip"><input type="checkbox" id="catDisability"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Особа з інвалідністю</span></label>
+          <label class="chip"><input type="checkbox" id="catUbd"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>УБД</span></label>
+          <label class="chip"><input type="checkbox" id="catVpo"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ВПО</span></label>
+          <label class="chip"><input type="checkbox" id="catChaes"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ЧАЕС</span></label>
+        </div>
+        <p class="hint">Без відмітки в таблицю піде «ні».</p>
+      </fieldset>
+    </section>
+
     <section class="card card-diag">
-      <h2 class="card-title"><span class="step">2</span>Діагноз</h2>
+      <h2 class="card-title"><span class="step">3</span>Діагноз</h2>
 
       <div id="dxList">
         <div class="dx" data-key="">
@@ -482,20 +497,6 @@
       <button type="button" class="btn-add" id="addDx" data-skip>+ Ще діагноз <small id="addDxNote"></small></button><button type="button" class="btn-print hidden" id="printAll" data-skip><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span id="printAllText">Роздрукувати всі</span></button>
     </section>
 
-    <section class="card card-marks">
-      <h2 class="card-title"><span class="step">3</span>Відмітки</h2>
-
-      <fieldset class="field">
-        <legend class="label">Пацієнт належить до категорії <span class="optional">(відмітьте, якщо так)</span></legend>
-        <div class="chips">
-          <label class="chip"><input type="checkbox" id="catDisability"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Особа з інвалідністю</span></label>
-          <label class="chip"><input type="checkbox" id="catUbd"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>УБД</span></label>
-          <label class="chip"><input type="checkbox" id="catVpo"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ВПО</span></label>
-          <label class="chip"><input type="checkbox" id="catChaes"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>ЧАЕС</span></label>
-        </div>
-        <p class="hint">Без відмітки в таблицю піде «ні».</p>
-      </fieldset>
-    </section>
 
     <section class="card card-doctor">
       <h2 class="card-title"><span class="step">4</span>Лікар і дата</h2>
