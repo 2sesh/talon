@@ -1901,16 +1901,16 @@
     }
     return H.map(function(v){ return ('0000000' + (v >>> 0).toString(16)).slice(-8); }).join('');
   }
-  // ПІБ пацієнта на екрані й в історії — зашифроване: у кожному слові перші 2 літери, решта — зірочки
-  // (Іваненко Іван Іванович → Ів****** Ів** Ів******). Повне ПІБ іде лише в Google Форму й на комп’ютері не зберігається.
+  // ПІБ пацієнта на екрані й в історії — зашифроване: у кожному слові перша літера, решта — зірочки
+  // (Іваненко Іван Іванович → І******* І*** І*******). Повне ПІБ іде лише в Google Форму й на комп’ютері не зберігається.
   var LETTER = /[A-Za-zА-ЯЁҐЄІЇа-яёґєії]/;
   function maskName(full){
     return String(full || '').split(' ').filter(Boolean).map(function(word){
-      return word.split('-').map(function(part){          // подвійне прізвище: Д’Артаньян-Петренко → Д’А*******-Пе******
+      return word.split('-').map(function(part){          // подвійне прізвище: Д’Артаньян-Петренко → Д*********-П*******
         var shown = 0, out = '';
         for (var i = 0; i < part.length; i++) {
           var ch = part.charAt(i);
-          if (shown < 2) { out += ch; if (LETTER.test(ch)) shown++; } else out += '*';
+          if (shown < 1) { out += ch; if (LETTER.test(ch)) shown++; } else out += '*';
         }
         return out;
       }).join('-');
@@ -2566,32 +2566,32 @@
     stCheck('Кожна відповідь-варіант — точно один із варіантів форми', !bad.length, bad.join(', '));
   }
   function stGroupMask(){
-    stGroup('Шифрування ПІБ', 'На екрані й у браузері — лише перші 2 літери кожного слова, решта — зірочки. Повне ПІБ іде тільки у форму.');
+    stGroup('Шифрування ПІБ', 'На екрані й у браузері — лише перша літера кожного слова, решта — зірочки. Повне ПІБ іде тільки у форму.');
     stEq('Іваненко Іван Іванович, подвійне прізвище з апострофом, короткі слова',
       [maskName('Іваненко Іван Іванович'), maskName('Д’Артаньян-Петренко Анна Петрівна'), maskName('Ли Ян Ок')],
-      ['Ів****** Ів** Ів******', 'Д’А*******-Пе****** Ан** Пе******', 'Ли Ян Ок']);
-    stCheck('Повторне шифрування нічого не змінює', maskName(maskName('Іваненко Іван Іванович')) === 'Ів****** Ів** Ів******');
+      ['І******* І*** І*******', 'Д*********-П******* А*** П*******', 'Л* Я* О*']);
+    stCheck('Повторне шифрування нічого не змінює', maskName(maskName('Іваненко Іван Іванович')) === 'І******* І*** І*******');
   }
   function stGroupHistory(){
     stGroup('Список «Надіслано за сесію»', 'Таблиця + надіслане з цього браузера без повторів; учорашнє не зберігається; повних ПІБ у браузері немає.');
     var keepLog = todayLog, keepSheet = sheet, D = DOCTORS[0], today = ymd(new Date());
     try {
       todayLog = { day: today, items: [
-        { t: '10:30', sec: 37800, name: 'Пе****** Пе** Пе******', icd: 'I10', doctor: D, date: today },
-        { t: '10:00', sec: 36000, name: 'Ів****** Ів** Ів******', icd: 'J06.9', doctor: D, date: today }] };
+        { t: '10:30', sec: 37800, name: 'П******* П*** П*******', icd: 'I10', doctor: D, date: today },
+        { t: '10:00', sec: 36000, name: 'І******* І*** І*******', icd: 'J06.9', doctor: D, date: today }] };
       sheet = { cols: null, doctor: D, day: today, turn: 0, last: 0, items: [
-        { t: '09:00', sec: 32400, name: 'Ко****** Ол** Пе******', icd: 'K29.7', doctor: D, date: today, sheet: true, row: 0 },
-        { t: '10:00', sec: 36004, name: 'Ів****** Ів** Ів******', icd: 'J06.9', doctor: D, date: today, sheet: true, row: 1 }] };
+        { t: '09:00', sec: 32400, name: 'К******* О*** П*******', icd: 'K29.7', doctor: D, date: today, sheet: true, row: 0 },
+        { t: '10:00', sec: 36004, name: 'І******* І*** І*******', icd: 'J06.9', doctor: D, date: today, sheet: true, row: 1 }] };
       var list = historyItems(D).map(function(s){ return s.t + ' ' + s.icd + (s.sheet ? ' (таблиця)' : ''); });
       stEq('Таблиця + щойно надіслане: без повторів, найновіші згори', list, ['10:30 I10', '10:00 J06.9 (таблиця)', '09:00 K29.7 (таблиця)']);
     } finally { todayLog = keepLog; sheet = keepSheet; }
     var yd = stDay(-1);
-    local.set(HISTORY_KEY, JSON.stringify({ day: yd, items: [{ t: '09:00', name: 'Ів** Ів** Ів**', icd: 'I10', doctor: D, date: yd }] }));
+    local.set(HISTORY_KEY, JSON.stringify({ day: yd, items: [{ t: '09:00', name: 'І*** І*** І***', icd: 'I10', doctor: D, date: yd }] }));
     loadHistory();
     stCheck('Учорашній список не показується й стирається', todayLog.items.length === 0 && local.get(HISTORY_KEY) === null);
     local.set(HISTORY_KEY, JSON.stringify({ day: today, items: [{ t: '09:00', name: 'Іваненко Іван Іванович', icd: 'I10', doctor: D, date: today }] }));
     loadHistory();
-    stCheck('Запис попередньої версії з повним ПІБ шифрується й перезаписується', todayLog.items.length === 1 && todayLog.items[0].name === 'Ів****** Ів** Ів******' &&
+    stCheck('Запис попередньої версії з повним ПІБ шифрується й перезаписується', todayLog.items.length === 1 && todayLog.items[0].name === 'І******* І*** І*******' &&
       String(local.get(HISTORY_KEY)).indexOf('Іваненко') === -1, local.get(HISTORY_KEY));
     local.remove(HISTORY_KEY);
     loadHistory();
@@ -2722,11 +2722,11 @@
       stCheck('Надіслано один запит (POST) на адресу форми', ST.sent.length === 1 && s.url === FORM_ACTION && s.method === 'POST', ST.sent.length + ' запитів');
       stEq('Надіслано саме те, що заповнено на сторінці', s ? stParams(new URLSearchParams(s.body)) : null, stParams(body(d)));
       stCheck('Після надсилання — «Талон надіслано» з зашифрованим ПІБ і кодом', !$('done').classList.contains('hidden') &&
-        $('doneText').textContent === 'Яр****** Га*** Ан******* · J06.9', $('doneText').textContent);
+        $('doneText').textContent === 'Я******* Г**** А******** · J06.9', $('doneText').textContent);
       var first = $('historyList').querySelector('li');
-      stCheck('Талон — у списку «Надіслано за сесію» з зашифрованим ПІБ', !!first && first.textContent.indexOf('Яр****** Га*** Ан*******') !== -1 && first.textContent.indexOf('J06.9') !== -1,
+      stCheck('Талон — у списку «Надіслано за сесію» з зашифрованим ПІБ', !!first && first.textContent.indexOf('Я******* Г**** А********') !== -1 && first.textContent.indexOf('J06.9') !== -1,
         first ? first.textContent : 'список порожній');
-      stCheck('Повного ПІБ у браузері немає (лише зашифроване)', String(local.get(HISTORY_KEY)).indexOf('Ярошенко') === -1 && String(local.get(HISTORY_KEY)).indexOf('Яр******') !== -1);
+      stCheck('Повного ПІБ у браузері немає (лише зашифроване)', String(local.get(HISTORY_KEY)).indexOf('Ярошенко') === -1 && String(local.get(HISTORY_KEY)).indexOf('Я*******') !== -1);
       stCheck('Лікар запам’ятався для наступних талонів', local.get('talonDoctor') === d.doctor);
       $('nextBtn').click();
       stCheck('«Заповнити наступний талон»: поля пацієнта порожні («Д» — знову «ні»), лікар і дата лишилися', !patientStarted() && radio('disp') === 'no' && dd.value.value === d.doctor &&
@@ -2783,12 +2783,12 @@
         del.doctor === d.doctor && del.ts === item.ts && del.r === item.r && stSheet.deleted.length === 1 && !findLocal(id) &&
         $('historyMsg').textContent.indexOf('Видалені') !== -1, stShow(del) + ' / ' + $('historyMsg').textContent);
       // талон без квитанції (надісланий з іншого телефона чи до оновлення) — без кнопки
-      todayLog.items.unshift({ id: 'Lother', t: '09:00', sec: 32400, name: 'Ів****** Ів** Ів******', icd: 'I10', doctor: d.doctor, date: d.date });
+      todayLog.items.unshift({ id: 'Lother', t: '09:00', sec: 32400, name: 'І******* І*** І*******', icd: 'I10', doctor: d.doctor, date: d.date });
       renderHistory();
       stCheck('Талон без квитанції (з іншого телефона) — без кнопки «Видалити»', !$('historyList').querySelector('.h-del[data-id="Lother"]'));
       todayLog.items.shift();
       // немає зв’язку під час видалення — талон лишається, повідомлення про помилку
-      todayLog.items.unshift({ id: 'Lnet', t: '09:05', sec: 32700, name: 'Пе****** Пе** Пе******', icd: 'J06.9', doctor: d.doctor, date: d.date, ts: '1', r: 'rc-x' });
+      todayLog.items.unshift({ id: 'Lnet', t: '09:05', sec: 32700, name: 'П******* П*** П*******', icd: 'J06.9', doctor: d.doctor, date: d.date, ts: '1', r: 'rc-x' });
       saveHistory();
       stSheet.down = true;
       return deleteTalon('Lnet');
@@ -2799,7 +2799,7 @@
         $('historyMsg').textContent.indexOf('Не вдалося видалити') === 0, $('historyMsg').textContent);
       // старий скрипт таблиці (без видалення) — квитанцію більше не просимо
       claims.Lold = { h: 'x', doctor: d.doctor, n: 0, timer: 0 };
-      todayLog.items.unshift({ id: 'Lold', t: '09:10', sec: 33000, name: 'Ко****** Ол** Пе******', icd: 'K29.7', doctor: d.doctor, date: d.date });
+      todayLog.items.unshift({ id: 'Lold', t: '09:10', sec: 33000, name: 'К******* О*** П*******', icd: 'K29.7', doctor: d.doctor, date: d.date });
       saveHistory();
       var keepCall = stScriptCall;
       stScriptCall = function(){ return Promise.resolve({ status: 'error', error: 'key' }); };
@@ -2898,7 +2898,7 @@
           ok.every(function(q){ return q[ENTRY.patient] === d.name && q[ENTRY.age] === d.age && q[ENTRY.vpo] === YES && q[ENTRY.doctor] === d.doctor; }),
           stShow(ok.map(function(q){ return [q[ENTRY.icd], q[ENTRY.firstTime], q[ENTRY.disp]]; })));
         stCheck('«Талон надіслано»: усі коди; у списку «Надіслано за сесію» — 3 талони', !$('done').classList.contains('hidden') &&
-          $('doneText').textContent === 'Яр****** Га*** Ан******* · J06.9, I10, K29.7' && todayLog.items.slice(0, 3).map(function(x){ return x.icd; }).join() === 'K29.7,I10,J06.9',
+          $('doneText').textContent === 'Я******* Г**** А******** · J06.9, I10, K29.7' && todayLog.items.slice(0, 3).map(function(x){ return x.icd; }).join() === 'K29.7,I10,J06.9',
           $('doneText').textContent);
         var hp = $('historyList').querySelectorAll('.h-print');
         printed = null; if (hp[0]) hp[0].click();
