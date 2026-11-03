@@ -1839,7 +1839,10 @@
   function editStart(id){
     var t = printStore[id], item = findLocal(id);
     if (!t || !item || !item.r) return;
-    if (patientStarted() && !editState) { historyMsg('Спершу надішліть або очистіть талон, який зараз заповнюєте.', true); return; }
+    // у формі — ще не надісланий талон (а не щойно надісланий, що лишився за екраном «Талон надіслано»)
+    var unsent = $('done').classList.contains('hidden') && dxRows().some(function(r){ return !r.classList.contains('sent'); });
+    if (unsent && patientStarted() && !editState) { historyMsg('Спершу надішліть або очистіть талон, який зараз заповнюєте.', true); return; }
+    historyMsg('');
     show('talon');
     resetPatient();
     $('name').value = t.name;
@@ -2822,10 +2825,10 @@
     }).then(function(){
       loadHistory(); item = findLocal(id) || {};
       renderHistory();
-      $('nextBtn').click();
       var pen = $('historyList').querySelector('.h-edit[data-id="' + id + '"]');
       if (pen) pen.click();
       var f = collect();
+      stCheck('Олівець прямо з екрана «Талон надіслано» — без «Спершу надішліть…»', !!pen && $('done').classList.contains('hidden') && !$('historyMsg').classList.contains('err'), $('historyMsg').textContent);
       stCheck('Олівець: талон повернувся у форму (ПІБ, вік, стать, місце, код, «Вперше», «Д», категорії, лікар, дата); вгорі — «Редагування талона», кнопка «Зберегти зміни»',
         !!pen && f.name === d.name && f.age === d.age && f.sex === d.sex && f.residence === d.residence && f.icd === d.icd && f.firstTime === d.firstTime && f.disp === d.disp &&
         f.vpo === 'yes' && f.ubd === 'no' && f.doctor === d.doctor && f.date === d.date && !$('editBar').classList.contains('hidden') &&
