@@ -136,20 +136,23 @@
   .dx + .dx{margin-top:4px; padding-top:14px; border-top:1px solid var(--separator);}
   .dx-top{display:flex; align-items:center; gap:8px; min-height:30px; margin:0 0 6px;}
   .dx-top .label{flex:1; margin:0;}
-  .dx-del{display:none; flex-shrink:0; align-items:center; gap:5px; height:30px; margin:0; padding:0 11px 0 9px; border:1px solid rgba(215,0,21,0.28); border-radius:999px;
-          background:var(--surface); color:var(--danger); font:inherit; font-size:0.82rem; font-weight:600; line-height:1; cursor:pointer; transition:background-color .15s ease;}
-  .dx-del svg{width:15px; height:15px;}
-  .dx-del:hover, .dx-del:active{background:var(--danger-soft);}
+  .dx-del{display:none; flex-shrink:0; align-items:center; gap:5px; height:28px; margin:0; padding:0 10px 0 8px; border:0; border-radius:8px;
+          background:var(--danger-soft); color:var(--danger); font:inherit; font-size:0.8rem; font-weight:600; line-height:1; cursor:pointer; transition:background-color .15s ease;}
+  .dx-del svg{width:14px; height:14px;}
+  .dx-del:hover, .dx-del:active{background:rgba(215,0,21,0.16);}
   .dx + .dx .dx-del{display:inline-flex;}
   .dx-sent{display:none; font-size:0.78rem; font-weight:700; color:var(--success);}
   .dx.sent .dx-sent{display:inline;}
   .dx.sent .dx-del{display:none;}
-  .dx-print{display:inline-flex; flex-shrink:0; align-items:center; gap:5px; height:30px; margin:0; padding:0 11px 0 9px; border:1px solid var(--accent); border-radius:999px;
-          background:var(--surface); color:var(--accent); font:inherit; font-size:0.82rem; font-weight:600; line-height:1; white-space:nowrap; cursor:pointer; transition:background-color .15s ease;}
-  .dx-print svg, .btn-print svg{width:15px; height:15px;}
-  .dx-print:hover, .dx-print:active{background:var(--accent-soft);}
-  .btn-print{display:inline-flex; align-items:center; gap:7px; min-height:40px; margin:2px 0 4px 8px; padding:8px 14px; border:1px solid var(--accent); border-radius:12px; background:var(--surface); color:var(--accent); font:inherit; font-size:0.92rem; font-weight:600; cursor:pointer;}
-  .btn-print:hover, .btn-print:active{background:var(--accent-soft);}
+  .dx-print{display:inline-flex; flex-shrink:0; align-items:center; gap:5px; height:28px; margin:0; padding:0 10px 0 8px; border:0; border-radius:8px;
+          background:var(--accent-soft); color:var(--accent); font:inherit; font-size:0.8rem; font-weight:600; line-height:1; white-space:nowrap; cursor:pointer; transition:background-color .15s ease;}
+  .dx-print svg, .btn-print svg{width:14px; height:14px; flex-shrink:0;}
+  .dx-print:hover, .dx-print:active, .btn-print:hover, .btn-print:active{background:var(--accent-ring);}
+  .dx-print:focus-visible, .btn-print:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .btn-print{display:inline-flex; align-items:center; gap:6px; min-height:40px; margin:2px 0 4px 8px; padding:8px 14px; border:0; border-radius:12px; background:var(--accent-soft); color:var(--accent); font:inherit; font-size:0.92rem; font-weight:600; cursor:pointer; transition:background-color .15s ease;}
+  .print-tip{position:fixed; left:50%; bottom:22px; z-index:50; width:max-content; max-width:min(440px, calc(100% - 32px)); transform:translateX(-50%); padding:11px 16px; border-radius:12px;
+             background:rgba(29,29,31,0.92); color:#fff; font-size:0.86rem; line-height:1.35; box-shadow:0 6px 24px rgba(0,0,0,0.18); opacity:0; pointer-events:none; transition:opacity .25s ease;}
+  .print-tip.on{opacity:1;}
   .done-card .btn-print{display:flex; justify-content:center; width:100%; min-height:48px; margin:12px 0 0; border-radius:14px;}
   .dx.sent .input, .dx.sent .seg{opacity:0.6;}
   .dx-marks{display:grid; grid-template-columns:minmax(0, 0.8fr) minmax(0, 1.2fr); gap:0 12px; align-items:end;}
@@ -1634,7 +1637,7 @@
         '<span class="a6-box">' + (t.sex === 'Чоловіча' ? '1' : t.sex === 'Жіноча' ? '2' : '') + '</span></div>' +
       '<div class="a6-f"><span><b>Місце проживання хворого</b></span><span class="v">' + esc(t.residence) + '</span></div>' +
       '<table class="a6-dx"><tr class="h"><td>Діагноз заключний<br>(уточнений)</td><td>вперше в житті встановлений (відмітити «+»)</td></tr>' +
-        '<tr class="n"><td' + (name.length > 110 ? ' class="long"' : '') + '>' + esc(name) + '</td><td class="plus">' + (t.firstTime === 'yes' ? '+' : '') + '</td></tr>' +
+        '<tr class="n"><td' + (name.length > 110 ? ' class="long"' : '') + '>' + esc(name) + '</td><td class="plus">' + (t.firstTime === 'yes' ? '+' : '−') + '</td></tr>' +
         '<tr class="c"><td>Код за МКХ-10<b>' + esc(t.icd) + '</b></td><td></td></tr></table>' +
       '<div class="a6-f"><span>Лікар</span><span class="v">' + esc(t.doctor) + '</span></div>' +
       '<div class="a6-f"><span>Дата</span><span class="v">' + esc(dmy(t.date)) + '</span></div>' +
@@ -1645,7 +1648,20 @@
     if (!area) { area = document.createElement('div'); area.id = 'printArea'; document.body.appendChild(area); }
     area.innerHTML = list.map(a6Html).join('');
     printed = list;
+    printTip();
     if (!TEST) window.print();                  // у тестовому режимі вікно друку не відкриваємо
+  }
+  // Розмір паперу А6 (105×148 мм) задано в самій сторінці — браузер одразу пропонує його. Підказка — раз за відкриття сторінки.
+  var tipShown = false;
+  function printTip(){
+    if (tipShown) return;
+    tipShown = true;
+    var t = document.createElement('div');
+    t.className = 'print-tip'; t.setAttribute('role', 'status');
+    t.textContent = 'Розмір А6 уже задано. Якщо принтер пропонує інший папір — виберіть «A6» і масштаб «100%».';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.classList.add('on'); }, 20);
+    setTimeout(function(){ t.classList.remove('on'); setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 400); }, 7000);
   }
   // Друк із форми: ті самі перевірки, що й перед «Надіслати», але лише для спільних полів і тих діагнозів, що друкуються
   function printFromForm(keys){
@@ -2803,8 +2819,8 @@
     function on(c){ return [].map.call(c.querySelectorAll('.o.on'), function(x){ return x.textContent; }); }
     function txt(c, sel){ var x = c.querySelector(sel); return x ? x.textContent : ''; }
     var got = cards.map(function(c){ return [txt(c, '.a6-dx .c b'), txt(c, '.plus'), on(c), txt(c, '.a6-box'), txt(c, '.a6-name .v')]; });
-    stCheck('«Роздрукувати всі»: 2 бланки — коди, «+», обведені «Д», категорії й стать, ПІБ — у кожному свої/спільні',
-      printed && printed.length === 2 && stSame(got, [['J06.9', '+', ['ні', 'ВПО', 'жіноча – 2'], '2', d.name], ['I10', '', ['так', 'ВПО', 'жіноча – 2'], '2', d.name]]), stShow(got));
+    stCheck('«Роздрукувати всі»: 2 бланки — коди, «+» / «−», обведені «Д», категорії й стать, ПІБ — у кожному свої/спільні',
+      printed && printed.length === 2 && stSame(got, [['J06.9', '+', ['ні', 'ВПО', 'жіноча – 2'], '2', d.name], ['I10', '−', ['так', 'ВПО', 'жіноча – 2'], '2', d.name]]), stShow(got));
     stCheck('У бланку — назва діагнозу з довідника, лікар і дата (дд.мм.рррр)',
       cards.length === 2 && txt(cards[0], '.a6-dx .n td') === dxName('J06.9') && dxName('J06.9') !== '' && cards[0].textContent.indexOf(d.doctor) !== -1 && cards[0].textContent.indexOf(dmy(d.date)) !== -1,
       stShow([txt(cards[0], '.a6-dx .n td'), dmy(d.date)]));
