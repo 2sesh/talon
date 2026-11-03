@@ -620,9 +620,9 @@
   var configured = Object.keys(ENTRY).every(function(k){ return /^entry\.\d+$/.test(ENTRY[k]); });
 
   function $(id){ return document.getElementById(id); }
-  function storage(){
+  function storage(kind){
     var s = null;
-    try { s = window.localStorage; s.getItem('x'); } catch (e) { s = null; }
+    try { s = window[kind || 'localStorage']; s.getItem('x'); } catch (e) { s = null; }
     return {
       ok: !!s,
       get: function(k){ try { return s ? s.getItem(k) : null; } catch (e) { return null; } },
@@ -638,6 +638,9 @@
     return { ok: true, get: function(k){ return m.hasOwnProperty(k) ? m[k] : null; }, set: function(k, v){ m[k] = String(v); }, remove: function(k){ delete m[k]; } };
   }
   var local = TEST ? memStorage() : storage();
+  // Повні дані надісланих талонів (для друку А6 і олівця) — лише в цій вкладці: переживають перезавантаження сторінки,
+  // але стираються, щойно вкладку чи браузер закрили, і наступного дня. На інший комп’ютер чи в іншу вкладку не потрапляють.
+  var tab = TEST ? memStorage() : storage('sessionStorage');
   // Історія надісланих талонів — лише за сьогодні. Зберігається в цьому браузері; наступного дня стирається сама.
   var HISTORY_KEY = 'talonHistory';
   // Закріплений лікар: обирається сам, коли відкриваєте сторінку, — доки його не відкріпити або не очистити кеш браузера.
@@ -1609,7 +1612,8 @@
   function savedOne(t){
     freqAdd(t.doctor, t.icd);
     var item = addToHistory(t);
-    printStore[item.id] = t;               // повні дані — лише в пам’яті сторінки, для друку А6 зі списку (у браузері не зберігаються)
+    printStore[item.id] = t;               // повні дані — лише в цій вкладці (див. tab), для друку А6 і олівця зі списку
+    savePrintStore();
     renderHistory();
     startClaim(item, t);
   }
@@ -1626,7 +1630,12 @@
   }
 
   // ---- друк «Оперативної інформації» (А6): кожен діагноз — окремий бланк, внесені значення — жирно й обведено ----
-  var donePrint = [], printed = null, printStore = {};            // printed — що пішло на друк (для самоперевірки)
+  var donePrint = [], printed = null, PRINT_KEY = 'talonFull', printStore = (function(){
+    var v = null;
+    try { v = JSON.parse(tab.get(PRINT_KEY) || 'null'); } catch (e) { v = null; }
+    return v && v.day === ymd(new Date()) && v.items && typeof v.items === 'object' ? v.items : {};
+  })();
+  function savePrintStore(){ tab.set(PRINT_KEY, JSON.stringify({ day: ymd(new Date()), items: printStore })); }            // printed — що пішло на друк (для самоперевірки)
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function dmy(s){ var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : ''; }
   function dxName(code){
@@ -1752,7 +1761,12 @@
   function nextClaim(id){
     var c = claims[id];
     if (!c) return;
-    if (c.n >= CLAIM_DELAYS.length) { delete claims[id]; return; }   // так і не з’явився в таблиці — видалити можна лише в таблиці
+    if (c.n >= CLAIM_DELAYS.length) {                               // так і не з’явився в таблиці — видалити можна лише в таблиці
+      delete claims[id];
+      historyMsg('Таблиця не підтвердила талон' + (c.err === 'server' ? ' (скрипт таблиці повертає помилку)' : c.err === 'net' ? ' (немає зв’язку зі скриптом таблиці)' : '') +
+                 ' — кошик і олівець для нього не з’являться; виправити чи видалити його можна в самій таблиці.', true);
+      return;
+    }
     c.timer = setTimeout(function(){ claimNow(id); }, CLAIM_DELAYS[c.n++]);
   }
   function claimNow(id){
@@ -1768,9 +1782,11 @@
         loadHistory();
         var it = findLocal(id);
         if (it) { it.ts = String(res.ts); it.r = String(res.r); saveHistory(); renderHistory(); }
-      } else if (res.status !== 'ok' && res.error === 'key') delete claims[id];   // скрипт таблиці ще старий — без видалення
-      else nextClaim(id);
-    }, function(){ nextClaim(id); });
+      } else if (res.status !== 'ok' && res.error === 'key') {          // скрипт таблиці ще старий чи з іншим ключем — без видалення
+        delete claims[id];
+        historyMsg('Скрипт таблиці не прийняв запит (стара версія або інший ключ) — кошик і олівець недоступні. Вставте останній скрипт і зробіть «Нова версія».', true);
+      } else { if (res.status !== 'ok') c.err = 'server'; nextClaim(id); }
+    }, function(){ c.err = 'net'; nextClaim(id); });
   }
   // запит до скрипта таблиці (JSONP); у тестовому режимі — до «скрипта» в пам’яті сторінки
   function scriptCall(params){
@@ -1822,6 +1838,7 @@
         var gone = findLocal(id) || item;
         todayLog.items = todayLog.items.filter(function(s){ return s.id !== id; });
         saveHistory();
+        if (printStore[id]) { delete printStore[id]; savePrintStore(); }
         if (sheet.items) { var k = matchSheet(gone, {}); if (k > -1) sheet.items.splice(k, 1); }   // щоб талон не «повернувся», поки таблиця перечитується
         if (editState && editState.id === id) editEnd();      // видалили той, що саме редагується, — далі це звичайний новий талон
         historyMsg(edited ? (res.deleted ? 'Талон змінено: старий варіант перенесено на аркуш «Видалені» в таблиці.' : 'Зміни збережено; старого талона в таблиці вже не було.')
