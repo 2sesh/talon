@@ -144,6 +144,13 @@
   .dx-sent{display:none; font-size:0.78rem; font-weight:700; color:var(--success);}
   .dx.sent .dx-sent{display:inline;}
   .dx.sent .dx-del{display:none;}
+  .dx-print{display:inline-flex; flex-shrink:0; align-items:center; gap:5px; height:30px; margin:0; padding:0 11px 0 9px; border:1px solid var(--accent); border-radius:999px;
+          background:var(--surface); color:var(--accent); font:inherit; font-size:0.82rem; font-weight:600; line-height:1; white-space:nowrap; cursor:pointer; transition:background-color .15s ease;}
+  .dx-print svg, .btn-print svg{width:15px; height:15px;}
+  .dx-print:hover, .dx-print:active{background:var(--accent-soft);}
+  .btn-print{display:inline-flex; align-items:center; gap:7px; min-height:40px; margin:2px 0 4px 8px; padding:8px 14px; border:1px solid var(--accent); border-radius:12px; background:var(--surface); color:var(--accent); font:inherit; font-size:0.92rem; font-weight:600; cursor:pointer;}
+  .btn-print:hover, .btn-print:active{background:var(--accent-soft);}
+  .done-card .btn-print{display:flex; justify-content:center; width:100%; min-height:48px; margin:12px 0 0; border-radius:14px;}
   .dx.sent .input, .dx.sent .seg{opacity:0.6;}
   .dx-marks{display:grid; grid-template-columns:minmax(0, 0.8fr) minmax(0, 1.2fr); gap:0 12px; align-items:end;}
   .dx-marks .field{margin-bottom:12px;}
@@ -353,6 +360,43 @@
   [data-theme="dark"] .theme-btn .i-sun{display:block;}
   [data-theme="dark"] .theme-btn .i-moon{display:none;}
 
+
+  /* ---- друк «Оперативної інформації» на А6 ---- */
+  #printArea{display:none;}
+  @media print{
+    @page{size:105mm 148mm; margin:0;}
+    html, body{background:#fff !important; margin:0 !important; padding:0 !important;}
+    body > *{display:none !important;}
+    body > #printArea{display:block !important;}
+  }
+  .a6{position:relative; width:105mm; height:148mm; padding:7mm 8mm 6mm; box-sizing:border-box; overflow:hidden; background:#fff; color:#000;
+      font-family:'Times New Roman', Times, serif; font-size:10.5pt; line-height:1.25; break-after:page; page-break-after:always;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .a6:last-child{break-after:auto; page-break-after:auto;}
+  .a6 .o{display:inline-block; padding:0 1mm; border:0.5mm solid transparent; border-radius:999px;}
+  .a6 .o.on{font-weight:700; border-color:#000; border-width:0.9mm;}
+  .a6 .v{flex:1; min-width:0; min-height:5mm; border-bottom:0.25mm solid #000; padding:0 1mm; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:10.5pt; overflow-wrap:anywhere;}
+  .a6-top{display:flex; justify-content:space-between; align-items:flex-start; gap:3mm; min-height:19mm;}
+  .a6-cats{display:flex; flex-direction:column; align-items:center; gap:0.4mm;}
+  .a6-title{margin-top:1.5mm; text-align:center; font-size:11pt; letter-spacing:0.02em;}
+  .a6-sub{margin-bottom:3.5mm; text-align:center;}
+  .a6-f{display:flex; align-items:flex-end; gap:1.5mm; margin-bottom:3mm;}
+  .a6-f > span:first-child{white-space:nowrap;}
+  .a6-name{margin-bottom:3mm;}
+  .a6-name .v{display:block; margin-top:1mm; min-height:6mm;}
+  .a6-sex{display:flex; align-items:center; justify-content:space-between; margin-bottom:3mm;}
+  .a6-box{display:inline-flex; align-items:center; justify-content:center; width:9mm; height:5.5mm; border:0.9mm solid #000; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:11pt;}
+  .a6-dx{width:100%; border-collapse:collapse; margin:1mm 0 3mm; table-layout:fixed;}
+  .a6-dx td{vertical-align:top; padding:0.6mm 1.2mm;}
+  .a6-dx td + td{width:27mm; border-left:0.3mm solid #000;}
+  .a6-dx .h td{font-size:9.5pt; line-height:1.15; padding-bottom:1mm; border-bottom:0.6mm solid #000;}
+  .a6-dx .h td:first-child{text-align:center;}
+  .a6-dx .n td{height:19mm; border-bottom:0.6mm solid #000;}
+  .a6-dx .n td:first-child{font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:9pt; line-height:1.2;}
+  .a6-dx .n td.long{font-size:7.8pt;}
+  .a6-dx .plus{text-align:center; vertical-align:middle; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:18pt;}
+  .a6-dx .c td{padding-top:1mm;}
+  .a6-dx .c b{display:inline-block; margin-left:2mm; padding:0 2mm; border:0.9mm solid #000; border-radius:999px; font-family:Arial, Helvetica, sans-serif; font-size:11.5pt;}
 </style>
 </head>
 <body>
@@ -409,7 +453,7 @@
       <div id="dxList">
         <div class="dx" data-key="">
           <div class="field" data-field="icd">
-            <div class="dx-top"><label class="label" for="icd">Діагноз за МКХ-10 <span class="optional">(код або назва)</span></label><span class="dx-sent">✓ надіслано</span><button type="button" class="dx-del" data-skip aria-label="Прибрати цей діагноз"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>Прибрати</button></div>
+            <div class="dx-top"><label class="label" for="icd">Діагноз за МКХ-10 <span class="optional">(код або назва)</span></label><span class="dx-sent">✓ надіслано</span><button type="button" class="dx-print" data-skip aria-label="Роздрукувати «Оперативну інформацію» А6 для цього діагнозу"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>Друк А6</button><button type="button" class="dx-del" data-skip aria-label="Прибрати цей діагноз"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>Прибрати</button></div>
             <input class="input icd-input" id="icd" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="80" placeholder="напр. J06.9 або «ГРВІ»"
                    role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="icdList">
             <p class="icd-name hidden" id="icdName" aria-live="polite"></p>
@@ -435,7 +479,7 @@
         </div>
       </div>
       <div class="icd-panel hidden" id="icdPanel"><p class="icd-head hidden" id="icdHead">Мої часті</p><ul class="icd-list" id="icdList" role="listbox" aria-label="Довідник МКХ-10"></ul><p class="icd-note hidden" id="icdNote"></p></div>
-      <button type="button" class="btn-add" id="addDx" data-skip>+ Ще діагноз <small id="addDxNote"></small></button>
+      <button type="button" class="btn-add" id="addDx" data-skip>+ Ще діагноз <small id="addDxNote"></small></button><button type="button" class="btn-print hidden" id="printAll" data-skip><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span id="printAllText">Роздрукувати всі</span></button>
     </section>
 
     <section class="card card-marks">
@@ -494,6 +538,7 @@
     <h2 class="done-title">Талон надіслано</h2>
     <p class="muted" id="doneText"></p>
     <button class="btn-primary" id="nextBtn" type="button">Заповнити наступний талон</button>
+    <button class="btn-print" id="donePrint" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span id="donePrintText">Роздрукувати А6</span></button>
   </section>
 
   <section id="history" class="history hidden" aria-label="Надіслані талони">
@@ -1341,6 +1386,8 @@
     var full = rows.length >= DX_MAX;
     $('addDx').disabled = full;
     $('addDxNote').textContent = full ? '(не більше ' + DX_MAX + ')' : '';
+    $('printAll').classList.toggle('hidden', rows.length < 2);
+    $('printAllText').textContent = 'Роздрукувати всі (' + rows.length + ')';
   }
   function dxAdd(focus){
     if (dxRows().length >= DX_MAX) return null;
@@ -1541,10 +1588,73 @@
   function finished(d){
     local.set('talonDoctor', d.doctor);
     $('doneText').textContent = maskName(d.name) + ' · ' + d.dx.map(function(r){ return r.icd; }).join(', ');
+    donePrint = d.dx.map(function(r){ return talonOf(d, r); });
+    $('donePrintText').textContent = donePrint.length > 1 ? 'Роздрукувати всі А6 (' + donePrint.length + ')' : 'Роздрукувати А6';
     show('done');
     window.scrollTo(0, 0);
     try { $('nextBtn').focus({ preventScroll: true }); } catch (e) {}
   }
+
+  // ---- друк «Оперативної інформації» (А6): кожен діагноз — окремий бланк, внесені значення — жирно й обведено ----
+  var donePrint = [], printed = null;            // printed — що пішло на друк (для самоперевірки)
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function dmy(s){ var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : ''; }
+  function dxName(code){
+    if (!code || icdWords(code) || !ICD_RE.test(code)) return '';
+    mkhLoad();
+    var k = mkhKey(code), e = MKH_BY[k], base = k.length === 6 ? MKH_BY[k.slice(0, 5)] : null;
+    return e ? e.n : base && fifthNote(k) ? base.n + ' · ' + fifthNote(k) : '';
+  }
+  function a6Html(t){
+    function o(on, txt){ return '<span class="o' + (on ? ' on' : '') + '">' + esc(txt) + '</span>'; }
+    var name = dxName(t.icd);
+    return '<div class="a6">' +
+      '<div class="a6-top"><div>Вказати «Д» (' + o(t.disp === 'yes', 'так') + ', ' + o(t.disp === 'no', 'ні') + ')</div>' +
+        '<div class="a6-cats">' + o(t.disability === 'yes', 'особи з інвалідністю') + o(t.ubd === 'yes', 'УБД') + o(t.vpo === 'yes', 'ВПО') + o(t.chaes === 'yes', 'ЧАЕС') + '</div></div>' +
+      '<div class="a6-title">ОПЕРАТИВНА ІНФОРМАЦІЯ</div><div class="a6-sub">для реєстрації заключних (уточнених) діагнозів</div>' +
+      '<div class="a6-name"><span>Прізвище, ім’я, по батькові</span><span class="v">' + esc(t.name) + '</span></div>' +
+      '<div class="a6-f"><span>Вік</span><span class="v">' + esc(t.age) + '</span></div>' +
+      '<div class="a6-sex"><span>Стать: ' + o(t.sex === 'Чоловіча', 'чоловіча – 1') + '; ' + o(t.sex === 'Жіноча', 'жіноча – 2') + '</span>' +
+        '<span class="a6-box">' + (t.sex === 'Чоловіча' ? '1' : t.sex === 'Жіноча' ? '2' : '') + '</span></div>' +
+      '<div class="a6-f"><span><b>Місце проживання хворого</b></span><span class="v">' + esc(t.residence) + '</span></div>' +
+      '<table class="a6-dx"><tr class="h"><td>Діагноз заключний<br>(уточнений)</td><td>вперше в житті встановлений (відмітити «+»)</td></tr>' +
+        '<tr class="n"><td' + (name.length > 110 ? ' class="long"' : '') + '>' + esc(name) + '</td><td class="plus">' + (t.firstTime === 'yes' ? '+' : '') + '</td></tr>' +
+        '<tr class="c"><td>Код за МКХ-10<b>' + esc(t.icd) + '</b></td><td></td></tr></table>' +
+      '<div class="a6-f"><span>Лікар</span><span class="v">' + esc(t.doctor) + '</span></div>' +
+      '<div class="a6-f"><span>Дата</span><span class="v">' + esc(dmy(t.date)) + '</span></div>' +
+    '</div>';
+  }
+  function printTalons(list){
+    var area = $('printArea');
+    if (!area) { area = document.createElement('div'); area.id = 'printArea'; document.body.appendChild(area); }
+    area.innerHTML = list.map(a6Html).join('');
+    printed = list;
+    if (!TEST) window.print();                  // у тестовому режимі вікно друку не відкриваємо
+  }
+  // Друк із форми: ті самі перевірки, що й перед «Надіслати», але лише для спільних полів і тих діагнозів, що друкуються
+  function printFromForm(keys){
+    clearErrors();
+    var d = collect();
+    d.dx.forEach(function(r){ var el = $('icd' + r.key); if (r.icd && !r.sent) { el.value = r.icd; icdNameSync(el); } });
+    var rows = keys ? d.dx.filter(function(r){ return keys.indexOf(r.key) !== -1; }) : d.dx;
+    var errs = validate(d), bad = Object.keys(errs).filter(function(k){
+      var m = /^(icd|disp)(_\d+)?$/.exec(k);
+      return !m || rows.some(function(r){ return r.key === (m[2] || ''); });
+    });
+    if (bad.length) {
+      bad.forEach(function(k){ setError(k, errs[k]); });
+      banner('Щоб роздрукувати, заповніть позначені поля.');
+      focusField(bad[0]);
+      return;
+    }
+    printTalons(rows.map(function(r){ return talonOf(d, r); }));
+  }
+  $('dxList').addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.dx-print');
+    if (b) printFromForm([dxKey(b.closest('.dx'))]);
+  });
+  $('printAll').addEventListener('click', function(){ printFromForm(null); });
+  $('donePrint').addEventListener('click', function(){ if (donePrint.length) printTalons(donePrint); });
 
   // ---- історія за сьогодні ----
   // Для вибраного лікаря список «Надіслано за сесію» береться з таблиці відповідей Google Форми, тож не залежить
@@ -2649,6 +2759,36 @@
       });
     });
   }
+  function stGroupPrint(){
+    stGroup('Друк «Оперативної інформації» (А6)', 'Кожен діагноз — окремий бланк А6; внесене — жирно, вибране обведено; без потрібних полів не друкується.');
+    var d = stSample();
+    show('talon'); stFill(d);
+    var one = $('printAll').classList.contains('hidden');
+    var r = dxAdd(false), k = dxKey(r);
+    stType($('icd' + k), 'I10'); stRadio('first' + k, 'no'); stRadio('disp' + k, 'yes');
+    icdClose();
+    stCheck('«Роздрукувати всі» — лише коли діагнозів 2 і більше', one && !$('printAll').classList.contains('hidden') && $('printAllText').textContent === 'Роздрукувати всі (2)', $('printAllText').textContent);
+    printed = null; $('printAll').click();
+    var cards = [].slice.call(document.querySelectorAll('#printArea .a6'));
+    function on(c){ return [].map.call(c.querySelectorAll('.o.on'), function(x){ return x.textContent; }); }
+    function txt(c, sel){ var x = c.querySelector(sel); return x ? x.textContent : ''; }
+    var got = cards.map(function(c){ return [txt(c, '.a6-dx .c b'), txt(c, '.plus'), on(c), txt(c, '.a6-box'), txt(c, '.a6-name .v')]; });
+    stCheck('«Роздрукувати всі»: 2 бланки — коди, «+», обведені «Д», категорії й стать, ПІБ — у кожному свої/спільні',
+      printed && printed.length === 2 && stSame(got, [['J06.9', '+', ['ні', 'ВПО', 'жіноча – 2'], '2', d.name], ['I10', '', ['так', 'ВПО', 'жіноча – 2'], '2', d.name]]), stShow(got));
+    stCheck('У бланку — назва діагнозу з довідника, лікар і дата (дд.мм.рррр)',
+      cards.length === 2 && txt(cards[0], '.a6-dx .n td') === dxName('J06.9') && dxName('J06.9') !== '' && cards[0].textContent.indexOf(d.doctor) !== -1 && cards[0].textContent.indexOf(dmy(d.date)) !== -1,
+      stShow([txt(cards[0], '.a6-dx .n td'), dmy(d.date)]));
+    printed = null; r.querySelector('.dx-print').click();
+    var single = printed && printed.length === 1 && printed[0].icd === 'I10' && document.querySelectorAll('#printArea .a6').length === 1;
+    $('age').value = ''; printed = null;
+    dxRows()[0].querySelector('.dx-print').click();
+    var blocked = printed === null && fieldBox('age').classList.contains('invalid') && /роздрукувати/.test($('formError').textContent);
+    stCheck('«Друк А6» біля діагнозу — один бланк саме цього діагнозу; не заповнено вік — нічого не друкується, поле підсвічено', single && blocked, stShow([single, printed, $('formError').textContent]));
+    $('age').value = d.age; clearErrors();
+    finished(collect()); printed = null; $('donePrint').click();
+    stCheck('Після надсилання: «Роздрукувати всі А6 (2)» на екрані «Талон надіслано»', printed && printed.length === 2 && $('donePrintText').textContent === 'Роздрукувати всі А6 (2)', stShow([printed && printed.length, $('donePrintText').textContent]));
+    $('nextBtn').click();
+  }
   function stGroupClear(){
     stGroup('«Очистити все»', 'Перше натискання — лише попередження; друге очищає все, разом із лікарем; дата — сьогоднішня.');
     stFill(stSample());
@@ -2686,7 +2826,7 @@
     }
     stBox().scrollIntoView({ block: 'start' });
     stRender();
-    var steps = [stGroupConfig, stGroupIcd, stGroupMkh, stGroupFreq, stGroupName, stGroupSexAuto, stGroupNameHint, stGroupValidate, stGroupPayload, stGroupMask, stGroupHistory, stGroupDate, stGroupDoctor, stGroupPhotos, stGroupSubmit, stGroupMulti, stGroupDelete, stGroupClear,
+    var steps = [stGroupConfig, stGroupIcd, stGroupMkh, stGroupFreq, stGroupName, stGroupSexAuto, stGroupNameHint, stGroupValidate, stGroupPayload, stGroupMask, stGroupHistory, stGroupDate, stGroupDoctor, stGroupPhotos, stGroupSubmit, stGroupMulti, stGroupPrint, stGroupDelete, stGroupClear,
                  function(){ return stGroupSafety(before); }], i = 0;
     function fail(e, n){
       if (ST.groups.length === n) stGroup('Перевірка');
