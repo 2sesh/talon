@@ -1826,6 +1826,7 @@
     }
     clearTimeout(delState.timer);
     delState.armed = ''; delState.busy = id;
+    historyMsg('Видаляю талон…');
     renderHistory();
     deleteTalon(id).then(function(){ delState.busy = ''; renderHistory(); });
   });
@@ -2049,7 +2050,9 @@
     return out.sort(function(a, b){ return secOf(b) - secOf(a) || (a.sheet ? 1 : 0) - (b.sheet ? 1 : 0) || (b.row || 0) - (a.row || 0); });
   }
   function renderHistory(){
-    var doctor = dd.value.value, list = $('historyList'), items = historyItems(doctor), docs = {};
+    var doctor = dd.value.value, list = $('historyList'), docs = {};
+    // талон, що саме видаляється, зі списку прибираємо одразу (не чекаючи таблиці); не вдалося — він повернеться
+    var items = historyItems(doctor).filter(function(s){ return !(delState.busy && s.mine && s.mine.id === delState.busy); });
     items.forEach(function(s){ if (s.doctor) docs[s.doctor] = true; });
     var manyDoctors = !doctor && Object.keys(docs).length > 1;   // лікаря не вибрано, а звідси вносили кілька — підписуємо, чий талон
     list.innerHTML = '';
@@ -2793,6 +2796,8 @@
       stCheck('Перше натискання — лише «Видалити?», нічого не видалено', !!armed && armed.textContent === 'Видалити?' &&
         stSheet.calls.filter(function(c){ return c.what === 'delete'; }).length === 0 && !!findLocal(id));
       if (armed) armed.click();
+      stCheck('Друге натискання — талон одразу зникає зі списку («Видаляю талон…»), не чекаючи таблиці',
+        !$('historyList').querySelector('[data-id="' + id + '"]') && $('historyMsg').textContent === 'Видаляю талон…', $('historyMsg').textContent);
       return stWait(40);
     }).then(function(){
       var del = stSheet.calls.filter(function(c){ return c.what === 'delete'; })[0] || {};
