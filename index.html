@@ -274,6 +274,7 @@
   .h-del.armed{background:var(--danger); color:#fff;}
   .h-del.armed .h-del-text{display:inline;}
   .h-del:disabled{opacity:.55; cursor:default;}
+  .h-busy > :not(.h-del){opacity:.45; transition:opacity .2s ease;}
   .edit-bar{display:flex; align-items:center; gap:10px; margin:0 0 14px; padding:12px 14px 12px 16px; border-radius:14px; background:var(--accent-soft); border:1px solid var(--accent-ring); color:var(--ink); font-size:0.92rem; line-height:1.35;}
   .edit-bar > svg{width:18px; height:18px; flex-shrink:0; color:var(--accent);}
   .edit-text{flex:1; min-width:0;}
@@ -2083,7 +2084,7 @@
         del.disabled = delState.busy === mine.id;
         del.setAttribute('aria-label', (armed ? 'Точно видалити талон ' : 'Видалити талон ') + s.name + ' · ' + s.icd);
         del.innerHTML = TRASH_ICON + '<span class="h-del-text">' + (del.disabled ? 'Видаляю…' : 'Видалити?') + '</span>';
-        if (del.disabled) del.className += ' armed';
+        if (del.disabled) { del.className += ' armed'; li.className += ' h-busy'; }   // видаляється — рядок блідий
         li.appendChild(del);
       }
       list.appendChild(li);
