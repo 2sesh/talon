@@ -164,8 +164,12 @@
   .icd-head{margin:0; padding:10px 16px 2px; font-size:0.78rem; font-weight:700; color:var(--ink-secondary); text-transform:uppercase; letter-spacing:0.04em;}
 
   .row{display:grid; gap:0 14px;}
+  .row-age{grid-template-columns:minmax(0,1fr) 128px;}
+  .row-age > [data-field="sex"]{grid-column:1 / -1;}
+  #age[readonly]{background:var(--fill); color:var(--ink); cursor:default;}
+  #age[readonly]:focus{border-color:var(--line); box-shadow:none;}
   @media (min-width:560px){
-    .row-age{grid-template-columns:130px 1fr;}
+    .row-age{grid-template-columns:minmax(0,190px) 136px minmax(0,1fr);}
     .row-doctor{grid-template-columns:1fr 190px;}
   }
 
@@ -350,6 +354,10 @@
   .st-btn.st-solid{border-color:var(--accent); background:var(--accent); color:#fff;}
   .st-text{width:100%; min-height:160px; margin-top:10px; font:12px/1.4 ui-monospace, Menlo, Consolas, monospace; border:1px solid var(--line); border-radius:10px; padding:8px;}
 
+  :root{color-scheme:light;}
+  #date{cursor:pointer;}
+  #date::-webkit-calendar-picker-indicator{opacity:.75; cursor:pointer; padding:4px; border-radius:6px;}
+  #date::-webkit-calendar-picker-indicator:hover{opacity:1; background:var(--fill);}
   /* --- темна тема (перемикач у шапці; вибір запам’ятовується; спершу — як у системі) --- */
   :root[data-theme="dark"]{
     color-scheme:dark;
@@ -398,29 +406,34 @@
   .a6:last-child{break-after:auto; page-break-after:auto;}
   .a6 .o{display:inline-block; padding:0 1mm; border:0.5mm solid transparent; border-radius:999px;}
   .a6 .o.on{font-weight:700; border-color:#000; border-width:0.9mm;}
-  .a6 .v{flex:1; min-width:0; min-height:5mm; border-bottom:0.25mm solid #000; padding:0 1mm; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:10.5pt; overflow-wrap:anywhere;}
+  .a6 .v{flex:1; min-width:0; min-height:5mm; border-bottom:0.25mm solid #000; padding:0 1mm; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:1em; overflow-wrap:anywhere;}
   .a6-top{display:flex; justify-content:space-between; align-items:flex-start; gap:3mm; min-height:19mm;}
   .a6-cats{display:flex; flex-direction:column; align-items:center; gap:0.4mm;}
-  .a6-title{margin-top:1.5mm; text-align:center; font-size:11pt; letter-spacing:0.02em;}
+  .a6-title{margin-top:1.5mm; text-align:center; font-size:1.05em; letter-spacing:0.02em;}
   .a6-sub{margin-bottom:3.5mm; text-align:center;}
   .a6-f{display:flex; align-items:flex-end; gap:1.5mm; margin-bottom:3mm;}
   .a6-f > span:first-child{white-space:nowrap;}
   .a6-name{margin-bottom:3mm;}
   .a6-name .v{display:block; margin-top:1mm; min-height:6mm;}
+  .a6-dob{margin-left:3mm; font-weight:400; font-size:0.9em; white-space:nowrap;}
+  .a6.fit .a6-top{min-height:0;}
+  .a6.fit .a6-f, .a6.fit .a6-name, .a6.fit .a6-sex{margin-bottom:2mm;}
+  .a6.fit .a6-sub{margin-bottom:2mm;}
+  .a6.fit .a6-dx .n td{height:auto; min-height:10mm;}
   .a6-sex{display:flex; align-items:center; justify-content:space-between; margin-bottom:3mm;}
-  .a6-box{display:inline-flex; align-items:center; justify-content:center; width:9mm; height:5.5mm; border:0.9mm solid #000; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:11pt;}
+  .a6-box{display:inline-flex; align-items:center; justify-content:center; width:9mm; height:5.5mm; border:0.9mm solid #000; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:1.05em;}
   .a6-dx{width:100%; border-collapse:collapse; margin:1mm 0 3mm; table-layout:fixed;}
   .a6-dx td{vertical-align:top; padding:0.6mm 1.2mm;}
   .a6-dx td + td{width:27mm; border-left:0.3mm solid #000;}
-  .a6-dx .h td{font-size:9.5pt; line-height:1.15; padding-bottom:1mm; border-bottom:0.6mm solid #000;}
+  .a6-dx .h td{font-size:0.9em; line-height:1.15; padding-bottom:1mm; border-bottom:0.6mm solid #000;}
   .a6-dx .h td:first-child{text-align:center;}
   .a6-dx .n td{height:19mm; border-bottom:0.6mm solid #000;}
-  .a6-dx .n td:first-child{font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:9pt; line-height:1.2;}
-  .a6-dx .n td.long{font-size:7.8pt;}
-  .a6-dx .plus{text-align:center; vertical-align:middle; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:18pt;}
+  .a6-dx .n td:first-child{font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:0.86em; line-height:1.2;}
+  .a6-dx .n td.long{font-size:0.75em;}
+  .a6-dx .plus{text-align:center; vertical-align:middle; font-family:Arial, Helvetica, sans-serif; font-weight:700; font-size:1.7em;}
   .a6-dx .c td{padding-top:1mm;}
   .a6-dx .c td{vertical-align:middle;}
-  .a6-dx .c b{display:inline-block; margin-left:2mm; padding:0.3mm 2mm; border:0.3mm solid #000; border-radius:0; font-family:Arial, Helvetica, sans-serif; font-size:14pt; line-height:1.15;}
+  .a6-dx .c b{display:inline-block; margin-left:2mm; padding:0.3mm 2mm; border:0.3mm solid #000; border-radius:0; font-family:Arial, Helvetica, sans-serif; font-size:1.33em; line-height:1.15;}
 </style>
 </head>
 <body>
@@ -453,9 +466,14 @@
       </div>
 
       <div class="row row-age">
+        <div class="field" data-field="dob" data-live>
+          <label class="label" for="dob">Дата народження</label>
+          <input class="input" id="dob" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="дд.мм.рррр">
+          <p class="field-error"></p>
+        </div>
         <div class="field" data-field="age">
           <label class="label" for="age">Вік</label>
-          <input class="input" id="age" type="text" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="повних років">
+          <input class="input" id="age" type="text" inputmode="numeric" autocomplete="off" maxlength="6" readonly tabindex="-1" aria-readonly="true">
           <p class="field-error"></p>
         </div>
         <fieldset class="field" data-field="sex">
@@ -1013,6 +1031,81 @@
     });
   }
   onLeave('age', function(v){ return /^\d+$/.test(v) ? String(parseInt(v, 10)) : v; }, function(){ return ''; });
+
+  // ---- дата народження: вводять лише цифри (крапки стають самі), «5.» → «05.», рік можна двома цифрами; вік рахується сам ----
+  var dobAuto = false, DOB_SEP = /[.,\/\-\s]/;
+  function dobFormat(raw, deleting){
+    var s = String(raw || '').replace(/^(\d)[.,\/\-\s]/, '0$1.').replace(/^(\d\d)[.,\/\-\s]+(\d)[.,\/\-\s]/, '$1.0$2.');
+    var d = s.replace(/\D/g, '').slice(0, 8), out = d.slice(0, 2);
+    if (d.length > 2 || (d.length === 2 && !deleting)) out += '.' + d.slice(2, 4);
+    if (d.length > 4 || (d.length === 4 && !deleting)) out += '.' + d.slice(4, 8);
+    return out;
+  }
+  function dobParse(v){                                   // «дд.мм.рррр» або «дд.мм.рр» → дата (або null, якщо такої дати немає)
+    var m = /^(\d{2})\.(\d{2})\.(\d{2}|\d{4})$/.exec(v || '');
+    if (!m) return null;
+    var y = Number(m[3]), mo = Number(m[2]) - 1, day = Number(m[1]);
+    if (m[3].length === 2) y += y > new Date().getFullYear() % 100 ? 1900 : 2000;
+    var b = new Date(y, mo, day);
+    return b.getFullYear() === y && b.getMonth() === mo && b.getDate() === day ? b : null;
+  }
+  function visitDay(){ var p = String($('date').value || '').split('-'); return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : new Date(); }
+  function fullYears(b, at){
+    var a = at.getFullYear() - b.getFullYear();
+    if (at.getMonth() < b.getMonth() || (at.getMonth() === b.getMonth() && at.getDate() < b.getDate())) a--;
+    return a;
+  }
+  function dobNorm(v){                                    // «12.05.79» → «12.05.1979»; інше — як є
+    v = String(v || '').trim().replace(/\.$/, '');
+    var m = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(v), b = m && dobParse(v);
+    return b ? m[1] + '.' + m[2] + '.' + b.getFullYear() : v;
+  }
+  // «47 років», «21 рік», «3 роки»; до року — у місяцях: «5 місяців», «1 місяць»; до місяця — «менше місяця»
+  function plural(n, one, few, many){ var a = n % 10, b = n % 100; return n + ' ' + (a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many); }
+  function ageText(b, at){
+    var y = fullYears(b, at);
+    if (y >= 1) return plural(y, 'рік', 'роки', 'років');
+    var m = (at.getFullYear() - b.getFullYear()) * 12 + at.getMonth() - b.getMonth() - (at.getDate() < b.getDate() ? 1 : 0);
+    return m >= 1 ? plural(m, 'місяць', 'місяці', 'місяців') : 'менше місяця';
+  }
+  function dobProblem(v){
+    if (!v) return '';
+    if (!/^\d{2}\.\d{2}\.(\d{2}|\d{4})$/.test(v)) return 'Дата народження повністю: дд.мм.рррр';
+    var b = dobParse(v);
+    if (!b) return 'Такої дати немає — перевірте день і місяць';
+    var a = fullYears(b, visitDay());
+    if (a < 0) return 'Дата народження пізніша за дату прийому';
+    if (a > AGE_MAX) return MSG.ageMax;
+    return '';
+  }
+  function dobSync(){                                     // вік — з повної дати народження на день прийому
+    var v = $('dob').value, ok = v.length === 10 && !dobProblem(v);
+    if (ok) {
+      $('age').value = ageText(dobParse(v), visitDay());
+      if (fieldBox('age').classList.contains('invalid')) setError('age', '');
+    } else $('age').value = '';
+    dobAuto = ok;
+    $('age').readOnly = true;                             // вік завжди рахується з дати народження
+  }
+  $('dob').addEventListener('input', function(e){
+    var del = !!(e && e.inputType && e.inputType.indexOf('delete') === 0), v = dobFormat(this.value, del);
+    if (v !== this.value) { this.value = v; try { this.setSelectionRange(v.length, v.length); } catch (er) {} }
+    var msg = v.length === 10 ? dobProblem(v) : '';
+    if (msg) setError('dob', msg); else if (fieldBox('dob').classList.contains('invalid')) setError('dob', '');
+    dobSync();
+    if (v.length === 10 && !msg) { var all = focusables(), i = all.indexOf(this); if (i > -1 && all[i + 1]) all[i + 1].focus(); }   // дату введено — далі
+  });
+  $('dob').addEventListener('blur', function(){
+    if (!document.hasFocus()) return;
+    var v = dobNorm(this.value);                                    // «12.05.79» → «12.05.1979»
+    this.value = v;
+    var msg = dobProblem(v);
+    if (msg) setError('dob', msg);
+    dobSync();
+  });
+  $('date').addEventListener('change', function(){ if ($('dob').value) dobSync(); });
+  // календар відкривається кліком будь-де в полі дати прийому (а не лише по значку)
+  $('date').addEventListener('click', function(){ try { if (this.showPicker) this.showPicker(); } catch (e) {} });
   function icdLeave(id){ onLeave(id, function(v){ return icdWords(v) ? clean(v) : icdFull(v); }, function(v){ return icdPicking ? '' : icdWords(v) || icdDigits(v) ? MSG.icdPick : icdError(v); }); }
   icdLeave('icd');
   onLeave('name', clean, nameError);
@@ -1463,7 +1556,7 @@
   function focusables(){
     var groups = {};
     return Array.prototype.filter.call($('talon').querySelectorAll('input, select, button'), function(el){
-      if (el.disabled || el.offsetParent === null || el.hasAttribute('data-skip')) return false;   // «Немає по батькові» Enter пропускає
+      if (el.disabled || el.readOnly || el.offsetParent === null || el.hasAttribute('data-skip')) return false;   // «Немає по батькові» Enter пропускає
       if (el.type === 'radio') {
         if (groups[el.name]) return false;
         var checked = document.querySelector('input[name="' + el.name + '"]:checked');
@@ -1494,7 +1587,8 @@
     var flag = function(id){ return $(id).checked ? 'yes' : 'no'; };
     return {
       name: clean($('name').value),
-      age: (function(v){ return /^\d+$/.test(v) ? String(parseInt(v, 10)) : v; })($('age').value.replace(/\s+/g, '')),
+      age: (function(v){ var b = !dobProblem(v) && dobParse(v); return b ? String(fullYears(b, visitDay())) : ''; })(dobNorm($('dob').value)),
+      dob: dobNorm($('dob').value),
       sex: radio('sex'),
       residence: radio('residence'),
       icd: icdValue($('icd')),
@@ -1517,9 +1611,8 @@
     var e = {};
     if (!d.name) e.name = 'Вкажіть ПІБ пацієнта';
     else if (nameError(d.name)) e.name = nameError(d.name);
-    if (d.age === '') e.age = 'Вкажіть вік';
-    else if (/\D/.test(d.age)) e.age = MSG.ageDigits;
-    else if (Number(d.age) > AGE_MAX) e.age = MSG.ageMax;
+    if (!d.dob) e.dob = 'Вкажіть дату народження';            // у формі замість віку — дата народження (вік рахується сам)
+    else if (dobProblem(d.dob)) e.dob = dobProblem(d.dob);
     if (!d.sex) e.sex = 'Оберіть стать';
     if (!d.residence) e.residence = 'Оберіть місце проживання';
     var seen = {};
@@ -1549,7 +1642,8 @@
     p.append(ENTRY.date + '_day', String(Number(ymdParts[2])));
     p.append(ENTRY.doctor, d.doctor);
     p.append(ENTRY.patient, d.name);
-    p.append(ENTRY.age, d.age);
+    var bp = dobParse(dobNorm(d.dob));                           // питання «Вік» у формі тепер типу «Дата» — дата народження
+    if (bp) { p.append(ENTRY.age + '_year', String(bp.getFullYear())); p.append(ENTRY.age + '_month', String(bp.getMonth() + 1)); p.append(ENTRY.age + '_day', String(bp.getDate())); }
     function choice(key, value){ p.append(ENTRY[key], value); p.append(ENTRY[key] + '_sentinel', ''); }
     choice('sex', d.sex);
     choice('residence', d.residence);
@@ -1653,7 +1747,7 @@
         '<div class="a6-cats">' + o(t.disability === 'yes', 'особи з інвалідністю') + o(t.ubd === 'yes', 'УБД') + o(t.vpo === 'yes', 'ВПО') + o(t.chaes === 'yes', 'ЧАЕС') + '</div></div>' +
       '<div class="a6-title">ОПЕРАТИВНА ІНФОРМАЦІЯ</div><div class="a6-sub">для реєстрації заключних (уточнених) діагнозів</div>' +
       '<div class="a6-name"><span>Прізвище, ім’я, по батькові</span><span class="v">' + esc(t.name) + '</span></div>' +
-      '<div class="a6-f"><span>Вік</span><span class="v">' + esc(t.age) + '</span></div>' +
+      '<div class="a6-f"><span>Вік</span><span class="v">' + esc((function(){ var b = dobParse(t.dob || ''); return b ? ageText(b, new Date(+t.date.slice(0, 4), +t.date.slice(5, 7) - 1, +t.date.slice(8, 10))) : t.age; })()) + (t.dob ? '<span class="a6-dob">дата народження ' + esc(t.dob) + '</span>' : '') + '</span></div>' +
       '<div class="a6-sex"><span>Стать: ' + o(t.sex === 'Чоловіча', 'чоловіча – 1') + '; ' + o(t.sex === 'Жіноча', 'жіноча – 2') + '</span>' +
         '<span class="a6-box">' + (t.sex === 'Чоловіча' ? '1' : t.sex === 'Жіноча' ? '2' : '') + '</span></div>' +
       '<div class="a6-f"><span><b>Місце проживання хворого</b></span><span class="v">' + esc(t.residence) + '</span></div>' +
@@ -1664,10 +1758,28 @@
       '<div class="a6-f"><span>Дата</span><span class="v">' + esc(dmy(t.date)) + '</span></div>' +
     '</div>';
   }
+  // Усе має влізти в А6: якщо щось задовге (ПІБ, місце проживання, назва діагнозу, лікар), бланк ущільнюється
+  // (менші відступи, далі — дрібніший шрифт крок за кроком), але не дрібніше 70 % звичайного.
+  function a6Fit(area){
+    var st = area.style, keep = st.cssText;
+    st.cssText = 'display:block; position:fixed; left:-10000px; top:0; visibility:hidden;';   // вимірюємо поза екраном
+    [].forEach.call(area.querySelectorAll('.a6'), function(c){
+      c.style.fontSize = ''; c.classList.remove('fit');
+      var over = function(){                             // низ останнього рядка (лікар/дата) — нижче краю бланка?
+        var bottom = c.getBoundingClientRect().bottom, last = c.lastElementChild;
+        return !!last && last.getBoundingClientRect().bottom > bottom - 4;
+      };
+      if (!over()) return;
+      c.classList.add('fit');
+      for (var k = 0.95; over() && k >= 0.7; k -= 0.05) c.style.fontSize = (10.5 * k).toFixed(2) + 'pt';
+    });
+    st.cssText = keep;
+  }
   function printTalons(list){
     var area = $('printArea');
     if (!area) { area = document.createElement('div'); area.id = 'printArea'; document.body.appendChild(area); }
     area.innerHTML = list.map(a6Html).join('');
+    a6Fit(area);
     printed = list;
     printTip();
     if (!TEST) window.print();                  // у тестовому режимі вікно друку не відкриваємо
@@ -1866,7 +1978,7 @@
     resetPatient();
     $('name').value = t.name;
     $('noPatr').checked = clean(t.name).split(' ').length === 2;
-    $('age').value = t.age;
+    $('dob').value = t.dob || ''; dobSync();
     [['sex', t.sex], ['residence', t.residence], ['first', t.firstTime === 'yes' ? 'yes' : 'no'], ['disp', t.disp]].forEach(function(x){
       var r = document.querySelector('input[name="' + x[0] + '"][value="' + x[1] + '"]'); if (r) r.checked = true;
     });
@@ -2124,11 +2236,12 @@
 
   // чи почали вносити пацієнта (лікар, дата й «Д: ні» — за замовчуванням — не в рахунок)
   function patientStarted(){
-    return !!($('name').value || $('age').value || $('icd').value || radio('sex') || radio('residence') || radio('disp') === 'yes' || radio('first') === 'yes' ||
+    return !!($('name').value || $('age').value || $('dob').value || $('icd').value || radio('sex') || radio('residence') || radio('disp') === 'yes' || radio('first') === 'yes' ||
       dxRows().length > 1 || ['catDisability', 'catUbd', 'catVpo', 'catChaes'].some(function(id){ return $(id).checked; }));
   }
   function resetPatient(){
-    ['name', 'age', 'icd'].forEach(function(id){ $(id).value = ''; });
+    ['name', 'age', 'dob', 'icd'].forEach(function(id){ $(id).value = ''; });
+    dobSync();
     dxResetAll();                                                             // зайві діагнози прибрати, лишається один
     document.querySelectorAll('input[name="sex"], input[name="residence"], input[name="disp"]').forEach(function(r){ r.checked = false; });
     document.querySelector('input[name="disp"][value="no"]').checked = true;    // «Д» за замовчуванням — «ні»
@@ -2292,14 +2405,15 @@
   }
 
   // ---- допоміжне ----
+  function stDob(age){ return '01.01.' + (new Date().getFullYear() - age); }   // 1 січня — на будь-який день цього року рівно age повних років
   function stSample(){
-    return { name: 'Ярошенко Ганна Андріївна', age: '45', sex: 'Жіноча', residence: 'Місто', icd: 'J06.9', firstTime: 'yes', disp: 'no',
+    return { name: 'Ярошенко Ганна Андріївна', age: '45', dob: stDob(45), sex: 'Жіноча', residence: 'Місто', icd: 'J06.9', firstTime: 'yes', disp: 'no',
              disability: 'no', ubd: 'no', vpo: 'yes', chaes: 'no', doctor: DOCTORS[0], date: ymd(new Date()) };
   }
   function stRadio(name, value){ var el = document.querySelector('input[name="' + name + '"][value="' + value + '"]'); if (el) el.checked = true; }
   function stFill(d){
     resetPatient();
-    $('name').value = d.name; $('age').value = d.age; $('icd').value = d.icd;
+    $('name').value = d.name; $('dob').value = d.dob || ''; dobSync(); $('icd').value = d.icd;
     stRadio('sex', d.sex); stRadio('residence', d.residence); stRadio('disp', d.disp);
     stRadio('first', d.firstTime === 'yes' ? 'yes' : 'no'); $('catDisability').checked = d.disability === 'yes'; $('catUbd').checked = d.ubd === 'yes';
     $('catVpo').checked = d.vpo === 'yes'; $('catChaes').checked = d.chaes === 'yes';
@@ -2552,15 +2666,49 @@
     stCheck('Стать, обрану вручну, не міняємо; з «Немає по батькові» — не вгадуємо; новий талон — стать порожня',
       stSame(m, ['Жіноча', true, '', '', true]), stShow(m));
   }
+  function stGroupDob(){
+    stGroup('Дата народження', 'Вводять лише цифри — крапки ставляться самі; вік рахується на день прийому; помилкову дату видно одразу.');
+    stEq('Цифри → дд.мм.рррр; «5.» → «05.»; стирання не повертає крапку', [dobFormat('05031979'), dobFormat('5.'), dobFormat('05.3.'), dobFormat('0503'), dobFormat('0503', true), dobFormat('05.03.19791')],
+      ['05.03.1979', '05.', '05.03.', '05.03.', '05.03', '05.03.1979']);
+    var p = dobParse('12.05.79'), q = dobParse('12.05.05');
+    stCheck('Неіснуюча дата — не дата; рік двома цифрами: 79 → 1979, 05 → 2005', dobParse('31.02.1990') === null && dobParse('29.02.2023') === null && !!dobParse('29.02.2024') &&
+      p && p.getFullYear() === 1979 && q && q.getFullYear() === 2005, stShow([p && p.getFullYear(), q && q.getFullYear()]));
+    resetPatient(); show('talon');
+    var keepDate = $('date').value;
+    function typeDob(v){ var el = $('dob'); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); return [$('age').value, $('age').readOnly]; }
+    $('date').value = '2026-03-04';
+    var a1 = typeDob('05.03.1979');
+    $('date').value = '2026-03-05'; $('date').dispatchEvent(new Event('change', { bubbles: true }));
+    var a2 = [$('age').value, $('age').readOnly];
+    stCheck('Вік — повні роки на день прийому (за день до дня народження — ще 46, у день народження — 47); змінили дату прийому — вік перерахувався; вік не редагується',
+      stSame([a1, a2], [['46 років', true], ['47 років', true]]), stShow([a1, a2]));
+    $('date').value = '2026-03-05';
+    var m3 = typeDob('01.12.2025'), m0 = typeDob('20.02.2026'), y1 = typeDob('05.03.2025');
+    stCheck('До року — у місяцях (3 місяці, менше місяця); рівно рік — «1 рік»', stSame([m3[0], m0[0], y1[0]], ['3 місяці', 'менше місяця', '1 рік']), stShow([m3, m0, y1]));
+    var at = new Date(2026, 10, 12), yrs = [1, 2, 4, 5, 11, 12, 14, 21, 22, 25, 101].map(function(n){ return ageText(new Date(2026 - n, 0, 1), at); });
+    stEq('Відмінювання: рік / роки / років', yrs, ['1 рік', '2 роки', '4 роки', '5 років', '11 років', '12 років', '14 років', '21 рік', '22 роки', '25 років', '101 рік']);
+    var bad = typeDob('31.02.1990'), err = fieldBox('dob').classList.contains('invalid') && /Такої дати немає/.test(fieldBox('dob').querySelector('.field-error').textContent);
+    var fut = typeDob('01.01.2027'), errF = /пізніша за дату прийому/.test(fieldBox('dob').querySelector('.field-error').textContent);
+    var none = typeDob('');
+    stCheck('Помилкова дата (31.02, пізніша за прийом) — помилка під полем, вік не підставляється; стерли дату — вік порожній',
+      err && errF && stSame([bad, fut, none], [['', true], ['', true], ['', true]]), stShow([bad, fut, none]));
+    var d = stSample(); d.dob = '31.02.1990';
+    var d2 = stSample(); d2.dob = '05.03.1979';
+    var d3 = stSample(); d3.dob = '';
+    stCheck('Перед надсиланням: без дати народження чи з помилковою — зупиняє', validate(d3).dob === 'Вкажіть дату народження' && !!validate(d).dob && !validate(d2).dob);
+    typeDob('05.03.1979'); resetPatient();
+    stCheck('Новий талон — дата народження й вік порожні; вік вручну не вводиться (лише з дати)', $('dob').value === '' && $('age').value === '' && $('age').readOnly);
+    $('date').value = keepDate;
+  }
   function stGroupValidate(){
     stGroup('Перевірка перед надсиланням', 'Обов’язкові поля, вік, дата прийому.');
     stEq('Правильно заповнений талон — без помилок', validate(stSample()), {});
-    var need = ['name', 'age', 'sex', 'residence', 'icd', 'disp', 'doctor', 'date'];
+    var need = ['name', 'dob', 'sex', 'residence', 'icd', 'disp', 'doctor', 'date'];
     var missed = need.filter(function(k){ var d = stSample(); d[k] = ''; return !validate(d)[k]; });
     stCheck('Кожне з ' + need.length + ' обов’язкових полів без значення — помилка під цим полем', !missed.length, 'не помічено: ' + missed.join(', '));
     var a = stSample(), b = stSample(), c = stSample();
-    a.age = '121'; b.age = 'абв'; c.age = '0';
-    stEq('Вік: більше 120 чи не цифри — помилка; 0 (немовля) — можна', [validate(a).age, validate(b).age, validate(c).age || ''], [MSG.ageMax, MSG.ageDigits, '']);
+    a.dob = stDob(121); b.dob = '1979'; c.dob = ymd(new Date()).split('-').reverse().join('.');
+    stEq('Дата народження: понад 120 років чи неповна — помилка; сьогоднішня (немовля) — можна', [validate(a).dob, validate(b).dob, validate(c).dob || ''], [MSG.ageMax, 'Дата народження повністю: дд.мм.рррр', '']);
     var y = new Date().getFullYear(), dd2 = function(v){ var d = stSample(); d.date = v; return validate(d).date || ''; };
     stEq('Дата: сьогодні й учора — так; післязавтра — «у майбутньому»; позаминулий рік — «перевірте рік»; 1 січня минулого року — так',
       [dd2(stDay(0)), dd2(stDay(-1)), dd2(stDay(2)), dd2((y - 2) + '-12-31'), dd2((y - 1) + '-01-01')],
@@ -2570,15 +2718,16 @@
   function stGroupPayload(){
     stGroup('Що надсилається у форму', 'Поля й значення запиту — так, як їх надсилає сама Google Форма.');
     var d = stSample();
-    d.date = '2026-03-07';
+    d.date = '2026-03-07'; d.dob = '05.03.1979';
     var p = body(d), want = {};
     want[ENTRY.date + '_year'] = '2026'; want[ENTRY.date + '_month'] = '3'; want[ENTRY.date + '_day'] = '7';
-    want[ENTRY.doctor] = DOCTORS[0]; want[ENTRY.patient] = 'Ярошенко Ганна Андріївна'; want[ENTRY.age] = '45'; want[ENTRY.icd] = 'J06.9';
+    want[ENTRY.doctor] = DOCTORS[0]; want[ENTRY.patient] = 'Ярошенко Ганна Андріївна'; want[ENTRY.icd] = 'J06.9';
+    want[ENTRY.age + '_year'] = '1979'; want[ENTRY.age + '_month'] = '3'; want[ENTRY.age + '_day'] = '5';   // питання «Вік» тепер — дата народження
     [['sex', 'Жіноча'], ['residence', 'Місто'], ['firstTime', YES], ['disp', NO], ['disability', NO], ['ubd', NO], ['vpo', YES], ['chaes', NO]].forEach(function(x){
       want[ENTRY[x[0]]] = x[1]; want[ENTRY[x[0]] + '_sentinel'] = '';
     });
     want.fvv = '1'; want.pageHistory = '0';
-    stEq('Усі ' + Object.keys(want).length + ' полів запиту з правильними значеннями (дата — окремо рік, місяць, день)', stParams(p), want);
+    stEq('Усі ' + Object.keys(want).length + ' полів запиту з правильними значеннями (дати прийому й народження — окремо рік, місяць, день)', stParams(p), want);
     var d2 = stSample();
     d2.icd = icdFull('і11,1,7');
     stEq('Код із двома крапками — без помилки й надсилається так, як записано (I11.1.7)', [validate(d2).icd || '', body(d2).get(ENTRY.icd)], ['', 'I11.1.7']);
@@ -2734,7 +2883,7 @@
     stSubmit();
     var invalid = [].slice.call(document.querySelectorAll('#talon .field.invalid')).map(function(b){ return b.getAttribute('data-field'); });
     stCheck('Порожній талон: помилки під обов’язковими полями, нічого не надіслано; «Д» — уже «ні» (за замовчуванням), без помилки', ST.sent.length === 0 &&
-      ['name', 'age', 'sex', 'residence', 'icd', 'doctor'].every(function(k){ return invalid.indexOf(k) !== -1; }) && invalid.indexOf('disp') === -1 && radio('disp') === 'no',
+      ['name', 'dob', 'sex', 'residence', 'icd', 'doctor'].every(function(k){ return invalid.indexOf(k) !== -1; }) && invalid.indexOf('disp') === -1 && radio('disp') === 'no',
       'помилки: ' + invalid.join(', ') + '; «Д»: ' + radio('disp'));
     stFill(d);
     stSubmit();
@@ -2859,7 +3008,7 @@
       $('editCancel').click();
       var cancelled = $('editBar').classList.contains('hidden') && !patientStarted() && $('submitBtn').textContent.indexOf('Надіслати') !== -1;
       $('historyList').querySelector('.h-edit[data-id="' + id + '"]').click();
-      $('age').value = '46'; stType($('icd'), 'I10'); icdClose();
+      $('dob').value = stDob(46); dobSync(); stType($('icd'), 'I10'); icdClose();
       sent0 = ST.sent.length;
       stCheck('«Скасувати» — форма порожня, знову «Надіслати»', cancelled);
       stSubmit();
@@ -2868,10 +3017,10 @@
       var q = ST.sent[sent0] ? stParams(new URLSearchParams(ST.sent[sent0].body)) : {};
       var del = stSheet.calls.filter(function(c){ return c.what === 'delete'; }).pop() || {};
       loadHistory();
-      stCheck('«Зберегти зміни»: пішов новий талон (вік 46, I10), старий прибрано (видалення за квитанцією), у списку — лише новий; повідомлення «Талон змінено»',
-        ST.sent.length === sent0 + 1 && q[ENTRY.age] === '46' && q[ENTRY.icd] === 'I10' && del.r === item.r && del.ts === item.ts && !findLocal(id) &&
+      stCheck('«Зберегти зміни»: пішов новий талон (на рік старший, I10), старий прибрано (видалення за квитанцією), у списку — лише новий; повідомлення «Талон змінено»',
+        ST.sent.length === sent0 + 1 && q[ENTRY.age + '_year'] === String(new Date().getFullYear() - 46) && q[ENTRY.icd] === 'I10' && del.r === item.r && del.ts === item.ts && !findLocal(id) &&
         todayLog.items[0].icd === 'I10' && $('historyMsg').textContent.indexOf('Талон змінено') === 0 && $('doneTitle').textContent === 'Зміни збережено' &&
-        $('editBar').classList.contains('hidden'), stShow([ST.sent.length - sent0, q[ENTRY.age], q[ENTRY.icd], del, $('historyMsg').textContent]));
+        $('editBar').classList.contains('hidden'), stShow([ST.sent.length - sent0, q[ENTRY.age + '_year'], q[ENTRY.icd], del, $('historyMsg').textContent]));
       $('nextBtn').click();
       stCheck('Наступний талон — звичайний: «Талон надіслано» й «Надіслати»', $('submitBtn').textContent.indexOf('Надіслати') !== -1 && $('editBar').classList.contains('hidden'));
       historyMsg('');
@@ -2918,7 +3067,7 @@
           part[0] === 2 && /Надіслано 1 з 3/.test(part[1]) && stSame(part[2], [true, false, false]) && part[3] && ST.sent.length === 4, stShow(part.concat([ST.sent.length])));
         stCheck('У форму пішли 3 талони: той самий пацієнт, вік, категорії, лікар і дата; коди й «Вперше»/«Д» — свої',
           ok.length === 3 && stSame(ok.map(function(q){ return [q[ENTRY.icd], q[ENTRY.firstTime], q[ENTRY.disp]]; }), want) &&
-          ok.every(function(q){ return q[ENTRY.patient] === d.name && q[ENTRY.age] === d.age && q[ENTRY.vpo] === YES && q[ENTRY.doctor] === d.doctor; }),
+          ok.every(function(q){ return q[ENTRY.patient] === d.name && q[ENTRY.age + '_year'] === d.dob.slice(6) && q[ENTRY.vpo] === YES && q[ENTRY.doctor] === d.doctor; }),
           stShow(ok.map(function(q){ return [q[ENTRY.icd], q[ENTRY.firstTime], q[ENTRY.disp]]; })));
         stCheck('«Талон надіслано»: усі коди; у списку «Надіслано за сесію» — 3 талони', !$('done').classList.contains('hidden') &&
           $('doneText').textContent === 'Я******* Г**** А******** · J06.9, I10, K29.7' && todayLog.items.slice(0, 3).map(function(x){ return x.icd; }).join() === 'K29.7,I10,J06.9',
@@ -2954,11 +3103,22 @@
       stShow([txt(cards[0], '.a6-dx .n td'), dmy(d.date)]));
     printed = null; r.querySelector('.dx-print').click();
     var single = printed && printed.length === 1 && printed[0].icd === 'I10' && document.querySelectorAll('#printArea .a6').length === 1;
-    $('age').value = ''; printed = null;
+    $('dob').value = ''; dobSync(); printed = null;
     dxRows()[0].querySelector('.dx-print').click();
-    var blocked = printed === null && fieldBox('age').classList.contains('invalid') && /роздрукувати/.test($('formError').textContent);
-    stCheck('«Друк А6» біля діагнозу — один бланк саме цього діагнозу; не заповнено вік — нічого не друкується, поле підсвічено', single && blocked, stShow([single, printed, $('formError').textContent]));
-    $('age').value = d.age; clearErrors();
+    var blocked = printed === null && fieldBox('dob').classList.contains('invalid') && /роздрукувати/.test($('formError').textContent);
+    stCheck('«Друк А6» біля діагнозу — один бланк саме цього діагнозу; не заповнено дату народження — нічого не друкується, поле підсвічено', single && blocked, stShow([single, printed, $('formError').textContent]));
+    $('dob').value = d.dob; dobSync(); clearErrors();
+    var lng = talonOf(collect(), collect().dx[0]);
+    lng.name = 'Константинопольська-Вишневецька Олександра-Марія Володимирівна'; lng.residence = 'Село (Бурлача Балка, Малодолинське)'; lng.dob = '05.03.1979';
+    lng.icd = 'T84.5'; lng.disability = lng.ubd = lng.vpo = lng.chaes = 'yes';
+    printTalons([lng, talonOf(collect(), collect().dx[0])]);
+    var area = $('printArea'), keepCss = area.style.cssText;
+    area.style.cssText = 'display:block; position:fixed; left:-10000px; top:0; visibility:hidden;';
+    var fit = [].map.call(area.querySelectorAll('.a6'), function(c){ return [c.classList.contains('fit'), c.lastElementChild.getBoundingClientRect().bottom <= c.getBoundingClientRect().bottom - 4]; });
+    var dobShown = area.querySelector('.a6-dob') && area.querySelector('.a6-dob').textContent;
+    area.style.cssText = keepCss;
+    stCheck('Задовгі ПІБ, місце, діагноз і всі відмітки — бланк ущільнюється й усе влазить в А6; звичайний — без змін; дата народження — біля віку',
+      stSame(fit, [[true, true], [false, true]]) && dobShown === 'дата народження 05.03.1979', stShow([fit, dobShown]));
     finished(collect()); printed = null; $('donePrint').click();
     stCheck('Після надсилання: «Роздрукувати всі А6 (2)» на екрані «Талон надіслано»', printed && printed.length === 2 && $('donePrintText').textContent === 'Роздрукувати всі А6 (2)', stShow([printed && printed.length, $('donePrintText').textContent]));
     $('nextBtn').click();
@@ -3000,7 +3160,7 @@
     }
     stBox().scrollIntoView({ block: 'start' });
     stRender();
-    var steps = [stGroupConfig, stGroupIcd, stGroupMkh, stGroupFreq, stGroupName, stGroupSexAuto, stGroupNameHint, stGroupValidate, stGroupPayload, stGroupMask, stGroupHistory, stGroupDate, stGroupDoctor, stGroupPhotos, stGroupSubmit, stGroupMulti, stGroupPrint, stGroupDelete, stGroupEdit, stGroupClear,
+    var steps = [stGroupConfig, stGroupIcd, stGroupMkh, stGroupFreq, stGroupName, stGroupSexAuto, stGroupDob, stGroupNameHint, stGroupValidate, stGroupPayload, stGroupMask, stGroupHistory, stGroupDate, stGroupDoctor, stGroupPhotos, stGroupSubmit, stGroupMulti, stGroupPrint, stGroupDelete, stGroupEdit, stGroupClear,
                  function(){ return stGroupSafety(before); }], i = 0;
     function fail(e, n){
       if (ST.groups.length === n) stGroup('Перевірка');
